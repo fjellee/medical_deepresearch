@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선천적 면역결핍증: 심층 분석 및 임상 가이드</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Styles for Chart Containers and Typography -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F3F4F6; /* Light gray/warm neutral */
+            color: #1F2937;
+        }
+
+        /* Chart Container Strict Styling */
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 700px; /* Max width to prevent stretching */
+            height: 350px;    /* Default height */
+            margin: 0 auto;   /* Center horizontally */
+        }
+
+        @media (max-width: 640px) {
+            .chart-wrapper {
+                height: 300px;
+            }
+        }
+
+        /* Transition Utilities */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-active {
+            border-bottom: 2px solid #2563EB; /* Blue-600 */
+            color: #1E40AF; /* Blue-800 */
+            font-weight: 700;
+        }
+        
+        /* Custom Scrollbar for content areas */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F1F1F1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+    </style>
+
+    <!-- Placeholder Comments Required by Prompt -->
+    <!-- Chosen Palette: Clinical Blue & Warm Neutral. Background: #F3F4F6 (Cool Gray 100), Primary: #2563EB (Blue 600), Accent: #10B981 (Emerald 500). Designed for clarity, professionalism, and reduced eye strain during reading. -->
+    
+    <!-- Application Structure Plan:
+         1. Dashboard (Overview): High-level statistics on prevalence and the "10 Warning Signs" interactive grid. Why? Sets the context and importance of the disease.
+         2. Pathophysiology (The Mechanism): Interactive "Immune Development Tree". Users click stages of cell maturation to see where defects occur. Why? Connects abstract biological processes to specific disease names (e.g., XLA, SCID).
+         3. Diagnosis (The Pathway): A step-by-step interactive algorithm. Users progress from History -> Screening -> Advanced Testing. Why? Mimics the clinician's thought process.
+         4. Treatment (Management): Comparative view of therapies (IVIG vs HSCT) and a survival trend chart. Why? Highlights outcomes and management strategies.
+         This structure moves from "What is it?" -> "How does it happen?" -> "How do we find it?" -> "How do we treat it?", creating a logical learning journey.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Prevalence (Dashboard): Doughnut Chart. Goal: Inform about the dominance of Antibody Deficiencies. Interaction: Tooltip details.
+         2. Warning Signs (Dashboard): Interactive Card Grid. Goal: Educate on screening. Interaction: Hover/Click to reveal clinical nuance.
+         3. Immune Tree (Pathophysiology): Flexbox-based flowchart (HTML/CSS). Goal: Visualize defects. Interaction: Click node -> Update detail panel. (No SVG).
+         4. Diagnostic Funnel (Diagnosis): Vertical Step-Stepper. Goal: Show the narrowing of differential diagnosis.
+         5. Survival Trends (Treatment): Line Chart. Goal: Show impact of early HSCT. Interaction: Toggle datasets.
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All visuals are Canvas (Chart.js) or styled HTML elements.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="flex flex-col h-screen overflow-hidden text-sm md:text-base">
+
+    <!-- Header / Navigation -->
+    <header class="bg-white shadow-sm z-10 flex-none">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Title -->
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-3 text-lg">IEI</div>
+                    <div>
+                        <h1 class="font-bold text-gray-900 leading-tight">선천적 면역결핍증</h1>
+                        <p class="text-xs text-gray-500">Inborn Errors of Immunity (IEI) Report</p>
+                    </div>
+                </div>
+                
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex space-x-8">
+                    <button onclick="app.navigate('dashboard')" id="nav-dashboard" class="nav-btn text-gray-500 hover:text-gray-700 px-3 py-2 font-medium transition-colors">개요 및 역학</button>
+                    <button onclick="app.navigate('patho')" id="nav-patho" class="nav-btn text-gray-500 hover:text-gray-700 px-3 py-2 font-medium transition-colors">병태생리</button>
+                    <button onclick="app.navigate('diagnosis')" id="nav-diagnosis" class="nav-btn text-gray-500 hover:text-gray-700 px-3 py-2 font-medium transition-colors">진단 접근</button>
+                    <button onclick="app.navigate('treatment')" id="nav-treatment" class="nav-btn text-gray-500 hover:text-gray-700 px-3 py-2 font-medium transition-colors">치료 가이드라인</button>
+                </nav>
+                
+                <!-- Mobile Menu Button (Simple implementation) -->
+                <button class="md:hidden text-gray-500" onclick="alert('화면을 가로로 돌리거나 더 큰 화면에서 최적의 경험을 하실 수 있습니다.')">
+                    <span>메뉴</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="main-container" class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 custom-scrollbar">
+        <!-- Content will be injected here by JS -->
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- DATA STORE ---
+        const reportData = {
+            dashboard: {
+                intro: "선천적 면역결핍증(Inborn Errors of Immunity, IEI)은 유전적 결함으로 인해 면역계의 한 부분 이상이 제대로 기능하지 못하는 질환군입니다. 과거에는 희귀 질환으로 여겨졌으나, 진단 기술의 발달로 현재 400개 이상의 유전자 결함이 밝혀졌습니다. 이 섹션에서는 질환의 분포와 조기 발견을 위한 핵심 경고 징후를 다룹니다.",
+                stats: {
+                    labels: ['항체 결핍 (Antibody)', '복합 면역 결핍 (Combined)', '식세포 결함 (Phagocytic)', '보체 결핍 (Complement)', '기타 (Others)'],
+                    data: [65, 15, 10, 5, 5],
+                    details: "항체 결핍증이 전체의 약 65%를 차지하여 가장 흔하며, 이는 임상적으로 반복적인 세균 감염으로 나타납니다."
+                },
+                warningSigns: [
+                    { id: 1, title: "4회 이상", desc: "1년 동안 귀 감염(중이염)이 4회 이상 발생" },
+                    { id: 2, title: "2회 이상", desc: "1년 동안 심각한 부비동염(축농증)이 2회 이상 발생" },
+                    { id: 3, title: "항생제", desc: "2개월 이상 항생제를 복용해도 효과가 미미함" },
+                    { id: 4, title: "폐렴", desc: "1년 동안 폐렴이 2회 이상 발생" },
+                    { id: 5, title: "성장 부진", desc: "영유아에서 체중 증가가 더디거나 성장이 지연됨" },
+                    { id: 6, title: "재발성 농양", desc: "피부나 장기에 반복적인 깊은 농양 발생" },
+                    { id: 7, title: "구내염", desc: "지속적인 입안 궤양(아구창) 또는 피부 진균 감염" },
+                    { id: 8, title: "IV 항생제", desc: "감염 치료를 위해 정맥 주사 항생제가 필요함" },
+                    { id: 9, title: "패혈증", desc: "패혈증 등 깊은 조직의 감염이 2회 이상 발생" },
+                    { id: 10, title: "가족력", desc: "원인 불명의 영아 사망 등 선천성 면역 결핍의 가족력" }
+                ]
+            },
+            patho: {
+                intro: "면역 결핍은 조혈모세포(Stem Cell)에서 성숙한 면역 세포로 분화하는 과정 중 특정 유전자의 결함으로 발생합니다. 결함이 발생하는 단계에 따라 질환의 표현형이 결정됩니다. 아래 다이어그램의 각 단계를 클릭하여 해당 단계의 결함으로 발생하는 대표적인 질환을 확인하세요.",
+                stages: [
+                    { 
+                        id: 'stem', 
+                        label: '조혈모세포 (HSC)', 
+                        disease: '세망이형성증 (Reticular Dysgenesis)',
+                        desc: '가장 초기 단계의 결함으로, 골수 기능 부전을 동반하며 백혈구 전체의 결핍을 초래합니다. 매우 치명적입니다.'
+                    },
+                    { 
+                        id: 'lymphoid', 
+                        label: '림프계 전구세포', 
+                        disease: '중증 복합 면역결핍증 (SCID)',
+                        desc: 'T세포와 B세포 발달 모두에 영향을 미칩니다. ADA 결핍 등이 포함되며, "Bubble Boy" 병으로도 알려져 있습니다. 즉각적인 조치가 없으면 영아기 사망 위험이 높습니다.'
+                    },
+                    { 
+                        id: 'pre-b', 
+                        label: 'Pre-B 세포', 
+                        disease: 'X-연관 무감마글로불린혈증 (XLA)',
+                        desc: 'BTK 유전자 돌연변이로 인해 B세포가 성숙하지 못합니다. 혈액 내 B세포가 거의 없고 모든 종류의 면역글로불린이 현저히 낮습니다.'
+                    },
+                    { 
+                        id: 'mature-b', 
+                        label: '성숙 B 세포', 
+                        disease: '공통 가변성 면역결핍증 (CVID)',
+                        desc: 'B세포 수는 정상이거나 낮을 수 있으나, 형질세포(Plasma cell)로 분화하여 항체를 생성하는 기능에 장애가 있습니다. 청소년기나 성인기에 주로 발병합니다.'
+                    },
+                    { 
+                        id: 'thymus', 
+                        label: '흉선 (T세포 발달)', 
+                        disease: 'DiGeorge 증후군',
+                        desc: '흉선 형성 부전으로 인해 T세포 성숙에 장애가 발생합니다. 심장 기형, 저칼슘혈증을 동반할 수 있습니다.'
+                    },
+                    { 
+                        id: 'phagocyte', 
+                        label: '식세포 (호중구)', 
+                        disease: '만성 육아종 질환 (CGD)',
+                        desc: '호중구의 살균 작용(활성산소 생성)에 필요한 효소 결핍으로, 카탈라아제 양성 세균(포도상구균 등) 및 곰팡이 감염에 취약합니다.'
+                    }
+                ]
+            },
+            diagnosis: {
+                intro: "정확한 진단은 환자의 예후를 결정하는 가장 중요한 단계입니다. 진단은 의심(임상 병력)에서 시작하여 선별 검사(Screening)를 거쳐 확진 검사(유전자 분석)로 이어지는 단계적 접근이 필요합니다. 아래 흐름을 따라 진단 프로세스를 경험해 보세요.",
+                steps: [
+                    {
+                        step: 1,
+                        title: "1단계: 선별 검사 (Screening)",
+                        content: "CBC & Diff Count, 면역글로불린 정량(IgG, IgA, IgM, IgE) 검사를 시행합니다.",
+                        detail: "호중구 감소증, 림프구 감소증을 확인하고, 저감마글로불린혈증 유무를 파악합니다. 이것만으로도 XLA, CVID 등을 선별할 수 있습니다."
+                    },
+                    {
+                        step: 2,
+                        title: "2단계: 기능적 항체 반응",
+                        content: "백신(예: 폐구균, 파상풍) 접종 후 항체 역가가 정상적으로 상승하는지 확인합니다.",
+                        detail: "Ig 수치가 정상이더라도 기능이 떨어지는 '특이 항체 결핍증'을 진단하는 데 필수적입니다."
+                    },
+                    {
+                        step: 3,
+                        title: "3단계: 림프구 아형 분석",
+                        content: "Flow Cytometry를 이용해 T세포(CD3, CD4, CD8), B세포(CD19, CD20), NK세포(CD16/56)의 분포를 분석합니다.",
+                        detail: "SCID의 유형(T-B+NK- 등)을 분류하거나, 분류 불가능한 면역 결핍의 표현형을 파악합니다."
+                    },
+                    {
+                        step: 4,
+                        title: "4단계: 유전자 검사 (확진)",
+                        content: "Targeted Panel Sequencing 또는 Whole Exome Sequencing (WES)을 시행합니다.",
+                        detail: "최종 확진을 내리고, 가족 상담 및 유전자 치료 가능 여부를 판단하는 근거가 됩니다."
+                    }
+                ]
+            },
+            treatment: {
+                intro: "치료의 목표는 감염 예방과 삶의 질 향상입니다. 근본적인 치료(조혈모세포 이식 등)와 보존적 치료(면역글로불린 보충)로 나뉩니다. 질환의 중증도에 따라 치료 전략이 달라집니다.",
+                comparison: {
+                    ivig: {
+                        title: "면역글로불린 보충요법 (IVIG/SCIG)",
+                        target: "항체 결핍증 (XLA, CVID)",
+                        method: "건강한 사람의 혈장 성분에서 추출한 IgG를 정맥(IV) 또는 피하(SC)로 주입.",
+                        pros: "감염 빈도 급감, 비교적 안전함.",
+                        cons: "평생 투여 필요, 고비용, 아나필락시스 위험(IgA 결핍 시)."
+                    },
+                    hsct: {
+                        title: "조혈모세포 이식 (HSCT)",
+                        target: "중증 복합 면역결핍증 (SCID), 중증 CGD",
+                        method: "결함이 있는 골수를 제거하고 건강한 공여자의 조혈모세포를 이식.",
+                        pros: "완치 가능 (Curative).",
+                        cons: "GVHD(이식편대숙주병), 감염 등 이식 관련 사망률 존재, 공여자 확보 어려움."
+                    }
+                }
+            }
+        };
+
+        // --- APP CONTROLLER ---
+        const app = {
+            state: {
+                currentTab: 'dashboard',
+                charts: {}
+            },
+
+            init: function() {
+                this.navigate('dashboard');
+                // Mobile menu styling adjustment handled by CSS/Tailwind
+            },
+
+            navigate: function(tabId) {
+                this.state.currentTab = tabId;
+                
+                // Update UI Nav
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('nav-active', 'text-blue-600');
+                    btn.classList.add('text-gray-500');
+                });
+                const activeBtn = document.getElementById(`nav-${tabId}`);
+                if (activeBtn) {
+                    activeBtn.classList.add('nav-active', 'text-blue-600');
+                    activeBtn.classList.remove('text-gray-500');
+                }
+
+                // Clean up old charts
+                Object.values(this.state.charts).forEach(chart => chart.destroy());
+                this.state.charts = {};
+
+                // Render Content
+                const container = document.getElementById('main-container');
+                container.innerHTML = ''; // Clear content
+                
+                switch(tabId) {
+                    case 'dashboard':
+                        this.renderDashboard(container);
+                        break;
+                    case 'patho':
+                        this.renderPatho(container);
+                        break;
+                    case 'diagnosis':
+                        this.renderDiagnosis(container);
+                        break;
+                    case 'treatment':
+                        this.renderTreatment(container);
+                        break;
+                }
+            },
+
+            // --- RENDERERS ---
+
+            renderDashboard: function(container) {
+                const data = reportData.dashboard;
+                
+                // Section Header
+                const sectionHtml = `
+                    <div class="fade-in max-w-5xl mx-auto space-y-8">
+                        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-3">질환 개요 (Overview)</h2>
+                            <p class="text-gray-600 leading-relaxed">${data.intro}</p>
+                        </section>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- Chart Section -->
+                            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4 w-full text-left border-l-4 border-blue-500 pl-3">면역 결핍 유형별 분포</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="prevalenceChart"></canvas>
+                                </div>
+                                <p class="mt-4 text-sm text-gray-500 text-center bg-gray-50 p-3 rounded-lg w-full">
+                                    💡 <strong>Insight:</strong> ${data.stats.details}
+                                </p>
+                            </section>
+
+                            <!-- Warning Signs -->
+                            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4 w-full text-left border-l-4 border-red-500 pl-3">10대 경고 징후 (Warning Signs)</h3>
+                                <div class="grid grid-cols-2 gap-3 h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                                    ${data.warningSigns.map(sign => `
+                                        <div class="group bg-red-50 hover:bg-red-100 p-3 rounded-lg cursor-pointer transition-all duration-200 border border-transparent hover:border-red-200"
+                                             onclick="alert('${sign.desc}')" title="클릭하여 상세 설명 확인">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="text-red-600 font-bold text-lg">${sign.id}</span>
+                                                <span class="text-xs text-red-400">Tap details</span>
+                                            </div>
+                                            <h4 class="font-bold text-gray-800 text-sm">${sign.title}</h4>
+                                            <p class="text-xs text-gray-600 mt-1 hidden group-hover:block animate-fade-in">${sign.desc}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2 text-right">*출처: Jeffrey Modell Foundation</p>
+                            </section>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = sectionHtml;
+
+                // Init Chart
+                const ctx = document.getElementById('prevalenceChart').getContext('2d');
+                this.state.charts.prevalence = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.stats.labels,
+                        datasets: [{
+                            data: data.stats.data,
+                            backgroundColor: ['#3B82F6', '#6366F1', '#10B981', '#F59E0B', '#9CA3AF'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15 } }
+                        }
+                    }
+                });
+            },
+
+            renderPatho: function(container) {
+                const data = reportData.patho;
+                
+                const sectionHtml = `
+                    <div class="fade-in max-w-5xl mx-auto space-y-8">
+                        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-3">병태생리 및 결함 위치</h2>
+                            <p class="text-gray-600 leading-relaxed mb-6">${data.intro}</p>
+                            
+                            <!-- Interactive Flow UI -->
+                            <div class="flex flex-col md:flex-row gap-4 items-stretch justify-center mb-8 relative">
+                                <!-- Connection Lines (Visual only, simple borders) -->
+                                <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-0"></div>
+
+                                ${data.stages.map((stage, index) => `
+                                    <button onclick="app.showPathoDetail('${stage.id}')" 
+                                            class="z-10 relative flex-1 bg-white border-2 border-gray-200 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-all text-center group focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                        <div class="w-8 h-8 mx-auto bg-gray-100 text-gray-500 rounded-full flex items-center justify-center mb-2 font-bold group-hover:bg-blue-100 group-hover:text-blue-600">
+                                            ${index + 1}
+                                        </div>
+                                        <span class="font-semibold text-gray-700 text-sm block">${stage.label}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+
+                            <!-- Detail Panel (Dynamic) -->
+                            <div id="patho-detail-panel" class="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center transition-all">
+                                <p class="text-blue-800 font-medium">위의 단계 버튼을 클릭하여 관련된 면역 결핍 질환을 확인하세요.</p>
+                            </div>
+                        </section>
+                    </div>
+                `;
+                container.innerHTML = sectionHtml;
+            },
+
+            showPathoDetail: function(id) {
+                const stage = reportData.patho.stages.find(s => s.id === id);
+                const panel = document.getElementById('patho-detail-panel');
+                
+                panel.innerHTML = `
+                    <div class="fade-in text-left">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded mr-2">단계: ${stage.label}</span>
+                            <h3 class="text-xl font-bold text-gray-900">${stage.disease}</h3>
+                        </div>
+                        <hr class="border-blue-200 my-3">
+                        <p class="text-gray-700 leading-relaxed">${stage.desc}</p>
+                    </div>
+                `;
+                panel.className = "bg-white border-l-4 border-blue-500 rounded-r-xl p-6 shadow-md transition-all";
+            },
+
+            renderDiagnosis: function(container) {
+                const data = reportData.diagnosis;
+
+                const sectionHtml = `
+                    <div class="fade-in max-w-4xl mx-auto space-y-6">
+                        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-3">진단적 접근 (Diagnostic Approach)</h2>
+                            <p class="text-gray-600 leading-relaxed mb-6">${data.intro}</p>
+
+                            <!-- Vertical Stepper -->
+                            <div class="space-y-4">
+                                ${data.steps.map(step => `
+                                    <div class="relative pl-8 md:pl-0">
+                                        <!-- Mobile Line -->
+                                        <div class="md:hidden absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+
+                                        <div class="flex flex-col md:flex-row md:items-start gap-4">
+                                            <!-- Step Indicator -->
+                                            <div class="hidden md:flex flex-col items-center mr-4 mt-1">
+                                                <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold z-10">
+                                                    ${step.step}
+                                                </div>
+                                                ${step.step !== 4 ? '<div class="h-full w-0.5 bg-gray-200 my-2"></div>' : ''}
+                                            </div>
+
+                                            <!-- Card -->
+                                            <div class="flex-1 bg-white border border-gray-200 rounded-lg p-5 hover:border-blue-300 transition-colors cursor-pointer group shadow-sm"
+                                                 onclick="this.querySelector('.detail-content').classList.toggle('hidden');">
+                                                <div class="flex justify-between items-center mb-2">
+                                                    <h3 class="font-bold text-gray-800 text-lg">
+                                                        <span class="md:hidden text-blue-600 mr-2">${step.step}.</span>
+                                                        ${step.title}
+                                                    </h3>
+                                                    <span class="text-gray-400 text-sm group-hover:text-blue-500">▼ 상세 보기</span>
+                                                </div>
+                                                <p class="text-gray-600">${step.content}</p>
+                                                
+                                                <!-- Toggleable Detail -->
+                                                <div class="detail-content hidden mt-4 pt-4 border-t border-gray-100 bg-gray-50 -mx-5 -mb-5 p-5 rounded-b-lg">
+                                                    <p class="text-sm text-gray-700"><span class="font-bold text-blue-600">임상적 의의:</span> ${step.detail}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+                    </div>
+                `;
+                container.innerHTML = sectionHtml;
+            },
+
+            renderTreatment: function(container) {
+                const data = reportData.treatment;
+
+                const sectionHtml = `
+                    <div class="fade-in max-w-5xl mx-auto space-y-8">
+                        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-3">치료 가이드라인 (Treatment)</h2>
+                            <p class="text-gray-600 leading-relaxed mb-6">${data.intro}</p>
+
+                            <!-- Treatment Comparison Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <!-- IVIG Card -->
+                                <div class="bg-blue-50 border border-blue-100 rounded-xl p-6">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h3 class="font-bold text-xl text-blue-800">${data.comparison.ivig.title}</h3>
+                                        <span class="bg-white text-blue-600 text-xs px-2 py-1 rounded border border-blue-200">보존적 치료</span>
+                                    </div>
+                                    <ul class="space-y-3 text-sm text-gray-700">
+                                        <li><strong>대상:</strong> ${data.comparison.ivig.target}</li>
+                                        <li><strong>방법:</strong> ${data.comparison.ivig.method}</li>
+                                        <li class="text-green-700"><strong>장점:</strong> ${data.comparison.ivig.pros}</li>
+                                        <li class="text-red-700"><strong>단점:</strong> ${data.comparison.ivig.cons}</li>
+                                    </ul>
+                                </div>
+
+                                <!-- HSCT Card -->
+                                <div class="bg-orange-50 border border-orange-100 rounded-xl p-6">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h3 class="font-bold text-xl text-orange-800">${data.comparison.hsct.title}</h3>
+                                        <span class="bg-white text-orange-600 text-xs px-2 py-1 rounded border border-orange-200">근본적 치료</span>
+                                    </div>
+                                    <ul class="space-y-3 text-sm text-gray-700">
+                                        <li><strong>대상:</strong> ${data.comparison.hsct.target}</li>
+                                        <li><strong>방법:</strong> ${data.comparison.hsct.method}</li>
+                                        <li class="text-green-700"><strong>장점:</strong> ${data.comparison.hsct.pros}</li>
+                                        <li class="text-red-700"><strong>단점:</strong> ${data.comparison.hsct.cons}</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Survival Chart -->
+                            <div class="bg-white rounded-xl p-6 border border-gray-200">
+                                <h3 class="text-lg font-bold text-gray-800 mb-4">치료 시기에 따른 생존율 (SCID 예시)</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="survivalChart"></canvas>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-4 text-center">
+                                    *가상 데이터: 생후 3.5개월 이내 조기 이식 시 생존율이 현저히 높음을 보여줍니다.
+                                </p>
+                            </div>
+                        </section>
+                    </div>
+                `;
+                container.innerHTML = sectionHtml;
+
+                // Init Chart
+                const ctx = document.getElementById('survivalChart').getContext('2d');
+                this.state.charts.survival = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['1년', '5년', '10년', '20년'],
+                        datasets: [
+                            {
+                                label: '조기 진단 및 이식 (<3.5개월)',
+                                data: [95, 94, 92, 90],
+                                borderColor: '#10B981', // Emerald 500
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.3,
+                                fill: true
+                            },
+                            {
+                                label: '지연된 진단 및 이식 (>3.5개월)',
+                                data: [70, 65, 60, 55],
+                                borderColor: '#EF4444', // Red 500
+                                backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                                tension: 0.3,
+                                fill: false,
+                                borderDash: [5, 5]
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: { mode: 'index', intersect: false },
+                            legend: { position: 'top' }
+                        },
+                        scales: {
+                            y: { min: 0, max: 100, title: { display: true, text: '생존율 (%)' } },
+                            x: { title: { display: true, text: '경과 기간' } }
+                        }
+                    }
+                });
+            }
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+    </script>
+</body>
+</html>
