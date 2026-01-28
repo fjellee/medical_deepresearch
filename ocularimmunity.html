@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocular Immunity: 안과 면역학의 기전과 임상</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F5F5F4; /* Stone-100: Warm Neutral Base */
+            color: #44403C; /* Stone-700 */
+        }
+
+        /* Chart Container Styling - Critical Requirement */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(231, 229, 228, 1);
+        }
+
+        .nav-item.active {
+            border-bottom: 2px solid #0D9488; /* Teal-600 */
+            color: #0D9488;
+            font-weight: 700;
+        }
+
+        .step-circle {
+            transition: all 0.3s ease;
+        }
+        .step-circle:hover {
+            transform: scale(1.1);
+            cursor: pointer;
+        }
+
+        /* Hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Stone) with Teal (Medical/Calm) and Amber (Highlight) accents. -->
+    <!-- Application Structure Plan:
+         1. Hero Section: Introduction to Ocular Immune Privilege.
+         2. The Barriers (Anatomy): Interactive block diagram of BAB and BRB.
+         3. ACAID Mechanism (Process): Interactive timeline showing the systemic tolerance induction flow.
+         4. Molecular Environment (Data): Radar chart comparing suppressive vs inflammatory factors.
+         5. Clinical Application (Outcome): Comparative bar chart (Transplant survival) and tabbed clinical insights (Uveitis).
+         Rationale: Moves from physical structure -> physiological process -> molecular data -> real-world clinical outcome.
+    -->
+    <!-- Visualization & Content Choices:
+         - Barriers: HTML/CSS Grid visualization to show "Tight Junctions" conceptually without SVG.
+         - ACAID: Interactive horizontal stepper to simplify the complex spleen-eye axis.
+         - Microenvironment: Radar Chart to visualize the "Balance" of cytokines.
+         - Clinical: Bar Chart to demonstrate the high success rate of corneal grafts compared to other organs (Proof of Privilege).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased selection:bg-teal-100 selection:text-teal-900">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-stone-50/90 backdrop-blur border-b border-stone-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">O</div>
+                    <span class="font-bold text-xl tracking-tight text-stone-800">Ocular<span class="font-light text-stone-500">Immunity</span></span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <button onclick="scrollToSection('intro')" class="nav-item text-stone-500 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors">개요</button>
+                    <button onclick="scrollToSection('barriers')" class="nav-item text-stone-500 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors">물리적 장벽</button>
+                    <button onclick="scrollToSection('acaid')" class="nav-item text-stone-500 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors">ACAID 기전</button>
+                    <button onclick="scrollToSection('clinical')" class="nav-item text-stone-500 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors">임상 적용</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="intro" class="relative overflow-hidden bg-stone-50 pt-16 pb-24">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-teal-100 text-teal-800 text-xs font-bold tracking-wide uppercase mb-4">Immunology Deep Dive</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-stone-900 mb-6 leading-tight">
+                왜 눈은 쉽게 <span class="text-teal-600">염증</span>이 생기지 않을까요?
+            </h1>
+            <p class="max-w-2xl mx-auto text-lg text-stone-600 mb-10 leading-relaxed">
+                안구는 시력을 보존하기 위해 염증 반응을 극도로 억제하는 <strong>'면역 특권(Immune Privilege)'</strong> 기관입니다. 
+                물리적 장벽, 능동적인 면역 억제 환경, 그리고 전신적인 면역 편위(Deviation) 기전이 조화롭게 작용하여 
+                투명한 시각 경로를 유지합니다.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:border-teal-300 transition-colors">
+                    <h3 class="font-bold text-stone-800 mb-2">🛡️ 물리적 장벽</h3>
+                    <p class="text-sm text-stone-500">혈액-안구 장벽(Blood-Ocular Barrier)을 통한 면역 세포의 유입 차단</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:border-teal-300 transition-colors">
+                    <h3 class="font-bold text-stone-800 mb-2">💧 억제 환경</h3>
+                    <p class="text-sm text-stone-500">방수(Aqueous Humor) 내 TGF-β 등 면역 억제 물질의 고농도 존재</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:border-teal-300 transition-colors">
+                    <h3 class="font-bold text-stone-800 mb-2">🔄 ACAID</h3>
+                    <p class="text-sm text-stone-500">전신적인 면역 관용을 유도하는 능동적 조절 기전</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 pb-20">
+
+        <!-- Section 1: Physical Barriers -->
+        <section id="barriers">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-3xl font-bold text-stone-800 mb-4">1. 물리적 장벽 (The Barriers)</h2>
+                    <p class="text-stone-600 mb-6 leading-relaxed">
+                        안구 면역 특권의 첫 번째 방어선은 혈관 내의 면역 세포와 단백질이 눈 내부로 무분별하게 들어오지 못하게 막는 <strong>혈액-안구 장벽(Blood-Ocular Barrier, BOB)</strong>입니다.
+                        이는 크게 혈액-방수 장벽(BAB)과 혈액-망막 장벽(BRB)으로 나뉩니다.
+                    </p>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-white rounded-lg border-l-4 border-teal-500 shadow-sm cursor-pointer hover:bg-stone-50 transition" onclick="highlightBarrier('bab')">
+                            <h4 class="font-bold text-stone-800">혈액-방수 장벽 (Blood-Aqueous Barrier)</h4>
+                            <p class="text-sm text-stone-500 mt-1">모양체 상피세포(Ciliary Epithelium)와 홍채 혈관 내피세포의 치밀 이음부(Tight Junction)로 구성.</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border-l-4 border-amber-500 shadow-sm cursor-pointer hover:bg-stone-50 transition" onclick="highlightBarrier('brb')">
+                            <h4 class="font-bold text-stone-800">혈액-망막 장벽 (Blood-Retina Barrier)</h4>
+                            <p class="text-sm text-stone-500 mt-1">망막 혈관 내피세포(Inner)와 망막색소상피(RPE, Outer)로 구성되어 망막을 보호.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CSS Interactive Visualization of Barrier -->
+                <div class="bg-stone-200 p-8 rounded-2xl relative h-80 flex flex-col justify-center items-center shadow-inner overflow-hidden">
+                    <div id="barrier-status" class="absolute top-4 right-4 text-xs font-bold text-stone-500 bg-white px-2 py-1 rounded">Status: Intact</div>
+                    
+                    <!-- Abstract Representation of Cells -->
+                    <div class="flex gap-1 mb-2 w-full justify-center transition-all duration-500" id="barrier-layer">
+                        <div class="w-12 h-20 bg-teal-600 rounded-md border-2 border-stone-300 flex items-center justify-center text-white text-xs font-bold shadow-lg">Cell</div>
+                        <div class="w-12 h-20 bg-teal-600 rounded-md border-2 border-stone-300 flex items-center justify-center text-white text-xs font-bold shadow-lg">Cell</div>
+                        <div class="w-12 h-20 bg-teal-600 rounded-md border-2 border-stone-300 flex items-center justify-center text-white text-xs font-bold shadow-lg">Cell</div>
+                        <div class="w-12 h-20 bg-teal-600 rounded-md border-2 border-stone-300 flex items-center justify-center text-white text-xs font-bold shadow-lg">Cell</div>
+                        <div class="w-12 h-20 bg-teal-600 rounded-md border-2 border-stone-300 flex items-center justify-center text-white text-xs font-bold shadow-lg">Cell</div>
+                    </div>
+                    
+                    <div class="w-full h-1 bg-amber-400 mt-2 mb-2 relative">
+                         <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xs text-amber-600 font-bold bg-stone-200 px-2">Tight Junctions</div>
+                    </div>
+
+                    <div class="w-full text-center mt-4">
+                        <p class="text-sm text-stone-600 mb-2 font-medium" id="barrier-desc">정상 상태: 세포 간 치밀 이음부(Tight Junction)가 견고하여 고분자 물질 및 세포 이동을 차단합니다.</p>
+                        <button onclick="toggleInflammation()" class="px-4 py-2 bg-rose-500 text-white text-sm rounded hover:bg-rose-600 transition shadow-md">염증 유발 (Breakdown)</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: ACAID Mechanism -->
+        <section id="acaid" class="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-stone-200">
+            <div class="max-w-3xl mx-auto text-center mb-10">
+                <h2 class="text-3xl font-bold text-stone-800 mb-4">2. 전방관련 면역편위 (ACAID)</h2>
+                <p class="text-stone-600">
+                    눈에 들어온 항원(Antigen)이 전신적인 면역 반응을 일으키지 않도록 하는 독특한 기전입니다. 
+                    눈은 항원을 비장(Spleen)으로 보내 조절 T세포(Treg)를 생성함으로써 염증을 능동적으로 억제합니다.
+                </p>
+            </div>
+
+            <!-- Interactive Timeline -->
+            <div class="relative">
+                <div class="absolute top-1/2 left-0 w-full h-1 bg-stone-200 transform -translate-y-1/2 z-0 hidden md:block"></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
+                    <!-- Step 1 -->
+                    <div class="flex flex-col items-center group" onclick="setAcaidStep(0)">
+                        <div class="w-12 h-12 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-md step-circle mb-4 border-4 border-stone-50 cursor-pointer ring-2 ring-teal-600 ring-offset-2">1</div>
+                        <h4 class="font-bold text-stone-800 text-sm">항원 포착</h4>
+                        <div class="h-1 w-full bg-teal-600 mt-2 md:hidden"></div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="flex flex-col items-center group" onclick="setAcaidStep(1)">
+                        <div class="w-12 h-12 rounded-full bg-stone-300 text-stone-600 flex items-center justify-center font-bold text-lg shadow-md step-circle mb-4 border-4 border-stone-50 cursor-pointer hover:bg-teal-400 hover:text-white transition">2</div>
+                        <h4 class="font-bold text-stone-800 text-sm">신호 전달</h4>
+                        <div class="h-1 w-full bg-stone-300 mt-2 md:hidden"></div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="flex flex-col items-center group" onclick="setAcaidStep(2)">
+                        <div class="w-12 h-12 rounded-full bg-stone-300 text-stone-600 flex items-center justify-center font-bold text-lg shadow-md step-circle mb-4 border-4 border-stone-50 cursor-pointer hover:bg-teal-400 hover:text-white transition">3</div>
+                        <h4 class="font-bold text-stone-800 text-sm">비장 이동</h4>
+                        <div class="h-1 w-full bg-stone-300 mt-2 md:hidden"></div>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="flex flex-col items-center group" onclick="setAcaidStep(3)">
+                        <div class="w-12 h-12 rounded-full bg-stone-300 text-stone-600 flex items-center justify-center font-bold text-lg shadow-md step-circle mb-4 border-4 border-stone-50 cursor-pointer hover:bg-teal-400 hover:text-white transition">4</div>
+                        <h4 class="font-bold text-stone-800 text-sm">Treg 생성</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Box -->
+            <div class="mt-8 bg-stone-50 p-6 rounded-xl border border-stone-200 text-center transition-all duration-300" id="acaid-desc-box">
+                <h3 class="text-xl font-bold text-teal-700 mb-2" id="acaid-title">Step 1: 항원 포착 (Antigen Capture)</h3>
+                <p class="text-stone-600" id="acaid-text">
+                    전방(Anterior Chamber) 내로 유입된 항원은 F4/80+ 대식세포와 같은 항원제시세포(APC)에 의해 포착됩니다. 
+                    이때 TGF-β가 풍부한 환경으로 인해 APC는 '관용적(Tolerogenic)' 성격을 띠게 됩니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 3: Microenvironment (Chart.js) -->
+        <section class="grid lg:grid-cols-2 gap-12 items-center">
+            <div class="order-2 lg:order-1">
+                <div class="chart-container">
+                    <canvas id="envChart"></canvas>
+                </div>
+            </div>
+            <div class="order-1 lg:order-2">
+                <h2 class="text-3xl font-bold text-stone-800 mb-4">3. 면역 억제 미세환경</h2>
+                <p class="text-stone-600 mb-6 leading-relaxed">
+                    안구 내부의 방수(Aqueous Humor)는 단순한 액체가 아닙니다. 여기에는 염증을 유발하는 Th1 세포의 활성을 억제하고, 
+                    조절 T세포를 활성화하는 다양한 <strong>면역 억제 인자</strong>들이 고농도로 존재합니다.
+                </p>
+                <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-stone-100 text-stone-700">
+                            <tr>
+                                <th class="px-4 py-3">주요 인자</th>
+                                <th class="px-4 py-3">기능 (Mechanism)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-100">
+                            <tr>
+                                <td class="px-4 py-3 font-medium text-teal-700">TGF-β</td>
+                                <td class="px-4 py-3">가장 핵심적인 억제 인자. 대식세포의 활성을 억제하고 ACAID 유도.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3 font-medium text-teal-700">Fas Ligand (FasL)</td>
+                                <td class="px-4 py-3">침입하는 림프구(T세포)의 자멸사(Apoptosis) 유도.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3 font-medium text-teal-700">α-MSH</td>
+                                <td class="px-4 py-3">염증성 사이토카인(IFN-γ) 억제 및 Treg 유도.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3 font-medium text-teal-700">VIP</td>
+                                <td class="px-4 py-3">T세포 증식 억제.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Clinical Application -->
+        <section id="clinical" class="pb-12">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-stone-800 mb-4">4. 임상적 연결 (Clinical Correlations)</h2>
+                <p class="text-stone-600 max-w-2xl mx-auto">
+                    면역 특권은 각막 이식의 성공률을 높이는 축복이기도 하지만, 특정 상황에서는 감염에 취약하게 하거나 자가면역 질환의 원인이 되기도 합니다.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-lg border border-stone-200 overflow-hidden flex flex-col md:flex-row">
+                <!-- Sidebar Tabs -->
+                <div class="bg-stone-50 md:w-1/4 border-r border-stone-200 p-4 space-y-2">
+                    <button onclick="updateClinical('transplant')" class="clinical-tab w-full text-left px-4 py-3 rounded-lg text-sm font-bold bg-white shadow-sm text-teal-700 border border-stone-200">각막 이식 (Transplant)</button>
+                    <button onclick="updateClinical('uveitis')" class="clinical-tab w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-stone-500 hover:bg-stone-100 transition">포도막염 (Uveitis)</button>
+                    <button onclick="updateClinical('infection')" class="clinical-tab w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-stone-500 hover:bg-stone-100 transition">안내염 (Infection)</button>
+                </div>
+
+                <!-- Content Area -->
+                <div class="p-8 md:w-3/4">
+                    <div id="clinical-content">
+                        <!-- Default: Transplant -->
+                        <div class="flex flex-col lg:flex-row gap-8">
+                            <div class="flex-1">
+                                <h3 class="text-2xl font-bold text-stone-800 mb-4">각막 이식의 높은 성공률</h3>
+                                <p class="text-stone-600 mb-4 leading-relaxed">
+                                    각막은 혈관이 없고(Avascular) 림프관이 없어 이식 거부 반응이 가장 적은 조직입니다. 
+                                    전신적인 면역 억제제 없이도 약 90%의 성공률을 보입니다. 이는 안구의 면역 특권이 임상적으로 증명된 가장 대표적인 사례입니다.
+                                </p>
+                                <ul class="space-y-2 text-sm text-stone-500">
+                                    <li class="flex items-center"><span class="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>HLA 일치 불필요</li>
+                                    <li class="flex items-center"><span class="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>ACAID 기전 작동</li>
+                                </ul>
+                            </div>
+                            <div class="flex-1">
+                                <div class="chart-container" style="height: 250px;">
+                                    <canvas id="clinicalChart"></canvas>
+                                </div>
+                                <p class="text-center text-xs text-stone-400 mt-2">*면역 억제제 미사용 시 장기 생존율 비교 (예시 데이터)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <h3 class="text-white text-lg font-bold mb-4">Ocular Immunology Study</h3>
+            <p class="text-sm mb-6">
+                본 자료는 안과 면역학의 기초 기전을 이해하기 위해 제작되었습니다.<br>
+                임상 적용 시에는 환자의 개별적인 상태와 최신 가이드라인을 따라야 합니다.
+            </p>
+            <div class="text-xs text-stone-600">
+                &copy; 2024 Interactive Medical Report. Generated based on Ocular Immune Privilege mechanisms.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Interaction: Barriers ---
+        let barrierIntact = true;
+        function highlightBarrier(type) {
+            // Simple focus effect, could be expanded
+            alert(type === 'bab' ? "혈액-방수 장벽: 홍채 혈관과 모양체 상피에 존재합니다." : "혈액-망막 장벽: 망막 보호의 핵심입니다.");
+        }
+
+        function toggleInflammation() {
+            barrierIntact = !barrierIntact;
+            const layer = document.getElementById('barrier-layer');
+            const status = document.getElementById('barrier-status');
+            const desc = document.getElementById('barrier-desc');
+            const btn = event.target;
+
+            if (barrierIntact) {
+                layer.classList.remove('gap-8');
+                layer.classList.add('gap-1');
+                status.innerText = "Status: Intact";
+                status.className = "absolute top-4 right-4 text-xs font-bold text-stone-500 bg-white px-2 py-1 rounded";
+                desc.innerText = "정상 상태: 세포 간 치밀 이음부(Tight Junction)가 견고하여 고분자 물질 및 세포 이동을 차단합니다.";
+                btn.innerText = "염증 유발 (Breakdown)";
+                btn.classList.replace('bg-teal-500', 'bg-rose-500');
+                btn.classList.replace('hover:bg-teal-600', 'hover:bg-rose-600');
+            } else {
+                layer.classList.remove('gap-1');
+                layer.classList.add('gap-8'); // Simulate breakdown
+                status.innerText = "Status: Breakdown";
+                status.className = "absolute top-4 right-4 text-xs font-bold text-red-500 bg-red-100 px-2 py-1 rounded";
+                desc.innerText = "염증 상태: 치밀 이음부가 파괴되어 백혈구와 단백질이 안구 내로 유입됩니다. (포도막염 발생)";
+                btn.innerText = "회복 (Restore)";
+                btn.classList.replace('bg-rose-500', 'bg-teal-500');
+                btn.classList.replace('hover:bg-rose-600', 'hover:bg-teal-600');
+            }
+        }
+
+        // --- 2. Interaction: ACAID Steps ---
+        const acaidData = [
+            { title: "Step 1: 항원 포착 (Antigen Capture)", text: "전방(Anterior Chamber) 내로 유입된 항원은 F4/80+ 대식세포와 같은 항원제시세포(APC)에 의해 포착됩니다. TGF-β가 풍부한 환경 때문에 APC는 관용적 성격을 띱니다." },
+            { title: "Step 2: 신호 전달 (Signal Processing)", text: "항원을 포착한 APC는 혈류를 타고 눈을 빠져나갑니다. 이 과정에서 염증성 신호(IL-12 등)를 생성하지 않는 것이 중요합니다." },
+            { title: "Step 3: 비장 이동 (Migration to Spleen)", text: "APC는 흉선(Thymus)이 아닌 비장(Spleen)으로 이동합니다. 이곳에서 순진한 T세포(Naïve T cell)와 만납니다." },
+            { title: "Step 4: 조절 T세포 생성 (Treg Generation)", text: "비장에서 항원 특이적인 CD8+ 조절 T세포(Treg)가 생성됩니다. 이들은 다시 눈으로 돌아오거나 전신을 순환하며 해당 항원에 대한 염증 반응(DTH)을 억제합니다." }
+        ];
+
+        function setAcaidStep(index) {
+            const title = document.getElementById('acaid-title');
+            const text = document.getElementById('acaid-text');
+            const circles = document.querySelectorAll('.step-circle');
+
+            // Update Text
+            title.innerText = acaidData[index].title;
+            text.innerText = acaidData[index].text;
+
+            // Update Style
+            circles.forEach((c, i) => {
+                if (i === index) {
+                    c.className = "w-12 h-12 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-md step-circle mb-4 border-4 border-stone-50 cursor-pointer ring-2 ring-teal-600 ring-offset-2";
+                } else {
+                    c.className = "w-12 h-12 rounded-full bg-stone-300 text-stone-600 flex items-center justify-center font-bold text-lg shadow-md step-circle mb-4 border-4 border-stone-50 cursor-pointer hover:bg-teal-400 hover:text-white transition";
+                }
+            });
+        }
+
+        // --- 3. Chart.js Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Radar Chart: Microenvironment
+            const ctxEnv = document.getElementById('envChart').getContext('2d');
+            new Chart(ctxEnv, {
+                type: 'radar',
+                data: {
+                    labels: ['TGF-β', 'FasL', 'VIP', 'α-MSH', 'IFN-γ', 'IL-2', 'IL-12'],
+                    datasets: [{
+                        label: 'Healthy Eye (Immune Privilege)',
+                        data: [95, 90, 80, 85, 10, 5, 15],
+                        fill: true,
+                        backgroundColor: 'rgba(13, 148, 136, 0.2)', // Teal
+                        borderColor: 'rgb(13, 148, 136)',
+                        pointBackgroundColor: 'rgb(13, 148, 136)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(13, 148, 136)'
+                    }, {
+                        label: 'Uveitis (Inflammation)',
+                        data: [40, 30, 20, 30, 90, 85, 80],
+                        fill: true,
+                        backgroundColor: 'rgba(244, 63, 94, 0.2)', // Rose
+                        borderColor: 'rgb(244, 63, 94)',
+                        pointBackgroundColor: 'rgb(244, 63, 94)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(244, 63, 94)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e5e7eb' },
+                            grid: { color: '#e5e7eb' },
+                            pointLabels: {
+                                font: { size: 12, family: "'Noto Sans KR', sans-serif" },
+                                color: '#4b5563'
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Bar Chart: Clinical (Initial)
+            initClinicalChart();
+        });
+
+        let clinicalChartInstance = null;
+        function initClinicalChart() {
+            const ctxClin = document.getElementById('clinicalChart').getContext('2d');
+            clinicalChartInstance = new Chart(ctxClin, {
+                type: 'bar',
+                data: {
+                    labels: ['각막 (Cornea)', '신장 (Kidney)', '심장 (Heart)', '피부 (Skin)'],
+                    datasets: [{
+                        label: '1년 생존율 (면역억제제 최소/미사용 시)',
+                        data: [90, 50, 40, 10], // Illustrative data showing privilege
+                        backgroundColor: [
+                            'rgba(13, 148, 136, 0.8)', // Teal (Cornea)
+                            'rgba(168, 162, 158, 0.5)',
+                            'rgba(168, 162, 158, 0.5)',
+                            'rgba(168, 162, 158, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgb(13, 148, 136)',
+                            'rgb(168, 162, 158)',
+                            'rgb(168, 162, 158)',
+                            'rgb(168, 162, 158)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: '생존율 (%)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- 4. Clinical Tabs Logic ---
+        const clinicalContent = {
+            'transplant': {
+                title: "각막 이식의 높은 성공률",
+                text: "각막은 혈관이 없고(Avascular) 림프관이 없어 이식 거부 반응이 가장 적은 조직입니다. 전신적인 면역 억제제 없이도 약 90%의 성공률을 보입니다. 이는 안구의 면역 특권이 임상적으로 증명된 가장 대표적인 사례입니다.",
+                chartData: [90, 50, 40, 10],
+                chartLabels: ['각막 (Cornea)', '신장 (Kidney)', '심장 (Heart)', '피부 (Skin)'],
+                note: "*면역 억제제 미사용 시 장기 생존율 비교 (예시 데이터)"
+            },
+            'uveitis': {
+                title: "포도막염: 면역 특권의 붕괴",
+                text: "포도막염은 혈액-안구 장벽이 무너지고, ACAID 기전이 실패하여 발생합니다. T세포가 자신의 안구 항원(망막 S-antigen 등)을 공격하는 자가면역 반응이 주된 원인입니다. 스테로이드 점안/주사로 억제 환경을 인위적으로 복구해야 합니다.",
+                chartData: [95, 20, 85, 10], 
+                chartLabels: ['정상 안구', '활동성 포도막염', '치료 후', '만성 재발'],
+                note: "*안구 내 염증 세포 수치 변화 (상대적 비교)"
+            },
+            'infection': {
+                title: "안내염: 양날의 검",
+                text: "면역 특권은 병원균에 대해서도 면역 반응을 억제하기 때문에, 일단 세균이 눈 속으로 들어오면(수술, 외상 등) 방어가 취약하여 급속도로 증식합니다. 이를 안내염(Endophthalmitis)이라 하며, 즉각적인 항생제 주입이 없으면 실명에 이릅니다.",
+                chartData: [10, 90, 50, 5],
+                chartLabels: ['초기 방어력', '세균 증식 속도', '조직 파괴', '자연 회복력'],
+                note: "*눈(면역 특권) vs 일반 조직의 감염 반응 비교"
+            }
+        };
+
+        function updateClinical(key) {
+            // Update Tab Styling
+            const tabs = document.querySelectorAll('.clinical-tab');
+            tabs.forEach(t => {
+                t.className = "clinical-tab w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-stone-500 hover:bg-stone-100 transition";
+            });
+            event.target.className = "clinical-tab w-full text-left px-4 py-3 rounded-lg text-sm font-bold bg-white shadow-sm text-teal-700 border border-stone-200";
+
+            // Update Content
+            const data = clinicalContent[key];
+            const contentDiv = document.getElementById('clinical-content');
+            
+            // Re-render chart with new data
+            if(clinicalChartInstance) {
+                clinicalChartInstance.data.labels = data.chartLabels;
+                clinicalChartInstance.data.datasets[0].data = data.chartData;
+                clinicalChartInstance.update();
+            }
+
+            // Update Text (Injecting HTML to keep layout)
+            contentDiv.querySelector('h3').innerText = data.title;
+            contentDiv.querySelector('p.leading-relaxed').innerText = data.text;
+            contentDiv.querySelector('p.text-xs').innerText = data.note;
+        }
+
+        // --- Navigation Scroll ---
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
