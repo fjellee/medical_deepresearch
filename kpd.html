@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ketone-Prone Type 2 Diabetes (KPD): Clinical Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom Scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f4; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        .interactive-card {
+            transition: all 0.3s ease;
+        }
+        .interactive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .nav-item.active {
+            background-color: #0f766e; /* teal-700 */
+            color: white;
+            border-left: 4px solid #134e4a; /* teal-900 */
+        }
+        /* Grid Highlight Animation */
+        .grid-quadrant {
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .grid-quadrant:hover {
+            background-color: #f0fdfa; /* teal-50 */
+        }
+        .grid-quadrant.selected {
+            background-color: #ccfbf1; /* teal-100 */
+            border: 2px solid #0f766e;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800 font-sans antialiased h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Placeholder Comments -->
+    <!-- Chosen Palette: Medical Teal & Warm Stone. Background: Stone-50 for reduced eye strain. Accents: Teal-700 for primary actions/headers, indicating clinical precision. Slate-800 for text readability. -->
+    <!-- Application Structure Plan: A dashboard-style SPA with left-side navigation for distinct clinical modules. 
+         1. Overview: Quick definition and 'Hook'. 
+         2. Classification: The core conceptual framework (Aß system) requiring interactive exploration.
+         3. Pathophysiology: Time-based logic best shown with a timeline/chart combo.
+         4. Diagnosis: Comparative logic best shown with a Radar chart.
+         5. Management: Process logic best shown with a phase-based stepper.
+         Rationale: Medical professionals need to quickly jump between definition, mechanism, and treatment. Linear scrolling is less effective for reference than a modular dashboard. -->
+    <!-- Visualization & Content Choices: 
+         - Aß System: Interactive 2x2 Grid. Goal: Teach the classification. Method: HTML/CSS Grid with JS selection logic. Justification: Better than a static table for understanding the axes (Autoimmunity vs Beta-cell function).
+         - Pathophysiology: Line Chart (Chart.js). Goal: Show 'Stunned Beta Cell' recovery. Justification: Visualizing the drop and rise of C-peptide is crucial for understanding the disease course.
+         - Comparison: Radar Chart (Chart.js). Goal: Differential diagnosis. Justification: Multi-variable comparison (BMI, Age, DKA risk, Ab) is clearest in Radar format.
+         - Treatment: HTML Tabs/Stepper. Goal: Guide through phases. Justification: Clean separation of acute vs long-term actions.
+         - Confirming NO SVG/Mermaid. Icons will use unicode or CSS shapes. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-teal-800 text-white p-4 flex justify-between items-center z-20 shadow-md">
+        <h1 class="font-bold text-lg">KPD Clinical Review</h1>
+        <button id="mobile-menu-btn" class="text-2xl focus:outline-none">&#9776;</button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="bg-white w-64 flex-shrink-0 border-r border-stone-200 flex flex-col h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 absolute md:relative z-10">
+        <div class="p-6 border-b border-stone-100">
+            <h1 class="text-xl font-bold text-teal-900 tracking-tight leading-tight">Ketone-Prone<br>Type 2 Diabetes</h1>
+            <p class="text-xs text-stone-500 mt-2">Clinical Decision Support & Review</p>
+        </div>
+        <div class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><button onclick="navTo('overview')" class="nav-item w-full text-left px-6 py-3 text-sm font-medium hover:bg-stone-50 transition-colors active" id="btn-overview">1. 개요 (Overview)</button></li>
+                <li><button onclick="navTo('classification')" class="nav-item w-full text-left px-6 py-3 text-sm font-medium hover:bg-stone-50 transition-colors" id="btn-classification">2. 분류 (Aß Classification)</button></li>
+                <li><button onclick="navTo('pathophysiology')" class="nav-item w-full text-left px-6 py-3 text-sm font-medium hover:bg-stone-50 transition-colors" id="btn-pathophysiology">3. 병태생리 (Pathophysiology)</button></li>
+                <li><button onclick="navTo('diagnosis')" class="nav-item w-full text-left px-6 py-3 text-sm font-medium hover:bg-stone-50 transition-colors" id="btn-diagnosis">4. 진단 및 감별 (Diagnosis)</button></li>
+                <li><button onclick="navTo('management')" class="nav-item w-full text-left px-6 py-3 text-sm font-medium hover:bg-stone-50 transition-colors" id="btn-management">5. 치료 및 관리 (Management)</button></li>
+            </ul>
+        </div>
+        <div class="p-4 border-t border-stone-100 text-xs text-stone-400">
+            Based on current clinical literature (2024)<br>For Medical Professionals
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto relative bg-stone-50 p-4 md:p-8" id="main-content">
+        
+        <!-- SECTION 1: OVERVIEW -->
+        <section id="section-overview" class="max-w-4xl mx-auto space-y-6 animate-fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-teal-900 mb-2">임상 개요 (Clinical Overview)</h2>
+                        <p class="text-stone-600 leading-relaxed">
+                            <strong>Ketone-Prone Diabetes (KPD)</strong>, 또는 "Flatbush Diabetes"는 전형적인 1형 당뇨병과 2형 당뇨병의 특징을 공유하는 중간 표현형의 당뇨병입니다. 
+                            <span class="bg-yellow-100 px-1 rounded text-yellow-800 font-semibold">DKA(당뇨병성 케톤산증)로 내원</span>하지만, 
+                            자가항체가 음성이고 이후 <span class="bg-green-100 px-1 rounded text-green-800 font-semibold">인슐린 분비능이 회복</span>되어 인슐린 중단이 가능한 것이 특징입니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Key Stats -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                    <h3 class="font-bold text-lg text-slate-800 mb-4">핵심 특징 (Key Features)</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                            <span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-3 text-sm font-bold">!</span>
+                            <span class="text-sm">급격한 고혈당 및 케톤산증 발생 (DKA Presentation)</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm font-bold">&Oslash;</span>
+                            <span class="text-sm">췌장 자가항체 음성 (Autoantibody Negative)</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3 text-sm font-bold">&#8635;</span>
+                            <span class="text-sm">베타세포 기능의 상당한 회복 (Beta-cell Recovery)</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3 text-sm font-bold">G</span>
+                            <span class="text-sm">비만 및 제2형 당뇨병 가족력 (Obesity & T2D History)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Epidemiology Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col">
+                    <h3 class="font-bold text-lg text-slate-800 mb-2">역학적 분포 (Epidemiology)</h3>
+                    <p class="text-xs text-stone-500 mb-4">전형적인 T2D 대비 KPD의 인종적 호발 경향 (미국 데이터 기준)</p>
+                    <div class="chart-container flex-1" style="height: 200px; min-height: 200px;">
+                        <canvas id="epiChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-teal-50 border-l-4 border-teal-600 p-4 rounded-r-lg">
+                <h4 class="font-bold text-teal-800 text-sm mb-1">임상적 중요성 (Clinical Significance)</h4>
+                <p class="text-sm text-teal-900">
+                    초기에 1형 당뇨병으로 오진하여 평생 인슐린 치료를 받게 되는 경우가 많습니다. 정확한 진단을 통해 환자는 경구약제로 전환(OAD)하고 삶의 질을 개선할 수 있습니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- SECTION 2: CLASSIFICATION -->
+        <section id="section-classification" class="max-w-5xl mx-auto space-y-6 hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                <h2 class="text-2xl font-bold text-teal-900 mb-2">Aß 분류 체계 (Modified Maldonado Classification)</h2>
+                <p class="text-stone-600 mb-6">
+                    KPD를 이해하기 위한 핵심 프레임워크입니다. <strong>자가항체 유무(A)</strong>와 <strong>베타세포 기능(ß)</strong>을 기준으로 4가지 그룹으로 분류합니다.
+                    <br><span class="text-sm text-stone-400">아래 사분면을 클릭하여 상세 내용을 확인하세요.</span>
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- The Interactive Grid -->
+                    <div class="relative bg-stone-100 rounded-lg p-1">
+                        <!-- Labels -->
+                        <div class="absolute -left-8 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-bold text-stone-500 tracking-widest text-center w-32">
+                            AUTOANTIBODIES (A)
+                        </div>
+                        <div class="absolute bottom-[-2rem] left-1/2 -translate-x-1/2 text-xs font-bold text-stone-500 tracking-widest">
+                            BETA-CELL FUNCTION (ß)
+                        </div>
+
+                        <!-- Grid -->
+                        <div class="grid grid-cols-2 gap-1 h-80 w-full">
+                            <!-- A+ B+ -->
+                            <div onclick="selectQuadrant('ApBp')" class="grid-quadrant bg-white rounded-tl-lg p-4 flex flex-col justify-center items-center border border-transparent hover:border-teal-200" id="q-ApBp">
+                                <span class="text-lg font-bold text-stone-800">A+ ß+</span>
+                                <span class="text-xs text-stone-500 mt-1">LADA / Late onset T1D</span>
+                            </div>
+                            <!-- A- B+ -->
+                            <div onclick="selectQuadrant('AmBp')" class="grid-quadrant selected bg-teal-50 border-2 border-teal-600 rounded-tr-lg p-4 flex flex-col justify-center items-center" id="q-AmBp">
+                                <span class="text-xl font-extrabold text-teal-800">A- ß+</span>
+                                <span class="text-xs text-teal-600 mt-1 font-bold">Ketosis-Prone T2D (KPD)</span>
+                                <span class="bg-teal-600 text-white text-[10px] px-2 py-0.5 rounded-full mt-2">Target Group</span>
+                            </div>
+                            <!-- A+ B- -->
+                            <div onclick="selectQuadrant('ApBm')" class="grid-quadrant bg-white rounded-bl-lg p-4 flex flex-col justify-center items-center border border-transparent hover:border-teal-200" id="q-ApBm">
+                                <span class="text-lg font-bold text-stone-800">A+ ß-</span>
+                                <span class="text-xs text-stone-500 mt-1">Classic Type 1A</span>
+                            </div>
+                            <!-- A- B- -->
+                            <div onclick="selectQuadrant('AmBm')" class="grid-quadrant bg-white rounded-br-lg p-4 flex flex-col justify-center items-center border border-transparent hover:border-teal-200" id="q-AmBm">
+                                <span class="text-lg font-bold text-stone-800">A- ß-</span>
+                                <span class="text-xs text-stone-500 mt-1">Idiopathic Type 1B</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Axis Labels internal -->
+                        <div class="absolute left-[-15px] top-[25%] text-[10px] text-stone-400 font-mono">Present (+)</div>
+                        <div class="absolute left-[-15px] top-[75%] text-[10px] text-stone-400 font-mono">Absent (-)</div>
+                        <div class="absolute top-[-15px] left-[25%] text-[10px] text-stone-400 font-mono">Absent (-)</div>
+                        <div class="absolute top-[-15px] left-[75%] text-[10px] text-stone-400 font-mono">Present (+)</div>
+                    </div>
+
+                    <!-- Detail Panel -->
+                    <div id="quadrant-detail" class="bg-white p-6 rounded-lg border border-teal-100 shadow-lg flex flex-col justify-center">
+                        <div class="flex items-center mb-4">
+                            <span class="bg-teal-100 text-teal-800 text-xs font-bold px-2 py-1 rounded uppercase mr-2" id="detail-tag">A-ß+</span>
+                            <h3 class="text-xl font-bold text-slate-800" id="detail-title">Ketosis-Prone T2D</h3>
+                        </div>
+                        <div class="space-y-4 text-sm text-stone-600" id="detail-content">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: PATHOPHYSIOLOGY -->
+        <section id="section-pathophysiology" class="max-w-4xl mx-auto space-y-6 hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                <h2 class="text-2xl font-bold text-teal-900 mb-4">병태생리: The "Stunned" Beta Cell</h2>
+                <p class="text-stone-600 mb-6 leading-relaxed">
+                    KPD의 가장 큰 특징은 베타세포 기능 부전의 <strong>가역성(Reversibility)</strong>입니다. 
+                    초기에는 심한 고혈당(Glucotoxicity)과 지방독성(Lipotoxicity)으로 인해 베타세포가 일시적으로 기절(Stunned)하여 인슐린 분비가 멈추고 DKA가 발생하지만, 
+                    혈당이 조절되면 기능이 회복됩니다.
+                </p>
+
+                <!-- Chart Container -->
+                <div class="bg-stone-50 rounded-lg p-4 border border-stone-200">
+                    <h3 class="text-sm font-bold text-center text-stone-500 mb-2">경과에 따른 C-peptide 수치 변화 (C-peptide Trajectory)</h3>
+                    <div class="chart-container">
+                        <canvas id="pathoChart"></canvas>
+                    </div>
+                    <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                        <div class="p-2 bg-red-50 rounded text-red-700">
+                            <strong>Phase 1: Acute</strong><br>급성 당독성<br>베타세포 마비
+                        </div>
+                        <div class="p-2 bg-yellow-50 rounded text-yellow-700">
+                            <strong>Phase 2: Transition</strong><br>혈당 정상화<br>기능 회복 시작
+                        </div>
+                        <div class="p-2 bg-green-50 rounded text-green-700">
+                            <strong>Phase 3: Maintenance</strong><br>기능 회복 완료<br>인슐린 중단 가능
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: DIAGNOSIS -->
+        <section id="section-diagnosis" class="max-w-4xl mx-auto space-y-6 hidden animate-fade-in">
+             <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-teal-900">감별 진단 (Differential Diagnosis)</h2>
+                        <p class="text-stone-600 text-sm mt-1">Classic T1D vs Classic T2D vs KPD 비교</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-teal-50 p-4 rounded-lg border-l-4 border-teal-500">
+                            <h4 class="font-bold text-teal-900 text-sm">KPD의 진단적 단서 (Clues)</h4>
+                            <ul class="list-disc list-inside text-sm text-teal-800 mt-2 space-y-1">
+                                <li><strong>중년 비만 남성:</strong> T1D보다 나이가 많고 BMI가 높음.</li>
+                                <li><strong>가족력:</strong> T2D의 강력한 가족력.</li>
+                                <li><strong>C-peptide:</strong> 내원 시엔 낮지만(자극 시 < 1.0 ng/mL), 1-2주 혈당 조절 후 재검 시 정상 범위로 상승.</li>
+                                <li><strong>자가항체 음성:</strong> GAD, IA-2, ZnT8 모두 음성.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Diagnosis Algorithm Simple UI -->
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                <h3 class="font-bold text-slate-800 mb-4">진단 알고리즘 (Diagnostic Flow)</h3>
+                <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 text-sm">
+                    <div class="flex-1 bg-red-50 p-3 rounded text-center border border-red-100">
+                        <span class="block font-bold text-red-800">DKA 내원</span>
+                        <span class="text-xs text-red-600">Ketones+, Acidosis</span>
+                    </div>
+                    <div class="text-stone-400 text-xl px-2">&#8594;</div>
+                    <div class="flex-1 bg-stone-50 p-3 rounded text-center border border-stone-200">
+                        <span class="block font-bold text-stone-800">초기 처치 & 검사</span>
+                        <span class="text-xs text-stone-500">Insulin + Hydration<br>Autoantibodies & C-peptide</span>
+                    </div>
+                    <div class="text-stone-400 text-xl px-2">&#8594;</div>
+                    <div class="flex-1 bg-white p-3 rounded text-center border-2 border-dashed border-stone-300 relative group">
+                        <span class="block font-bold text-slate-800">결과 판정</span>
+                        <div class="absolute top-full left-0 w-full mt-2 bg-white shadow-lg rounded p-2 text-xs text-left hidden group-hover:block z-10 border border-stone-200">
+                            <strong>Ab(+):</strong> T1D / LADA<br>
+                            <strong>Ab(-) & C-pep Low(sustained):</strong> Idiopathic T1B<br>
+                            <strong>Ab(-) & C-pep Recovered:</strong> KPD
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: MANAGEMENT -->
+        <section id="section-management" class="max-w-4xl mx-auto space-y-6 hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                <h2 class="text-2xl font-bold text-teal-900 mb-6">치료 및 관리 전략 (Management Strategy)</h2>
+                
+                <!-- Custom Tabs -->
+                <div class="flex border-b border-stone-200 mb-6">
+                    <button class="px-4 py-2 text-sm font-medium text-teal-700 border-b-2 border-teal-600 focus:outline-none transition-colors" onclick="switchMgmtTab(0)" id="mgmt-tab-0">Acute Phase</button>
+                    <button class="px-4 py-2 text-sm font-medium text-stone-500 hover:text-teal-700 focus:outline-none transition-colors" onclick="switchMgmtTab(1)" id="mgmt-tab-1">Transition Phase</button>
+                    <button class="px-4 py-2 text-sm font-medium text-stone-500 hover:text-teal-700 focus:outline-none transition-colors" onclick="switchMgmtTab(2)" id="mgmt-tab-2">Long-term</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="mgmt-content-0" class="mgmt-content animate-fade-in">
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                        <h3 class="font-bold text-red-900">급성기 (DKA Management)</h3>
+                        <p class="text-sm text-red-800">표준 DKA 프로토콜에 따릅니다. KPD라고 해서 급성기 치료가 다르지 않습니다.</p>
+                    </div>
+                    <ul class="list-disc list-inside space-y-2 text-stone-700 text-sm">
+                        <li><strong>Insulin:</strong> IV Insulin infusion until acidosis resolves, then SC basal-bolus.</li>
+                        <li><strong>Fluids:</strong> Aggressive hydration (NS or half-NS).</li>
+                        <li><strong>Electrolytes:</strong> Potassium monitoring and replacement.</li>
+                        <li><strong>Goal:</strong> Resolution of ketoacidosis and recovery from glucotoxicity.</li>
+                    </ul>
+                </div>
+
+                <div id="mgmt-content-1" class="mgmt-content hidden animate-fade-in">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+                        <h3 class="font-bold text-yellow-900">이행기 (Weaning Insulin)</h3>
+                        <p class="text-sm text-yellow-800">퇴원 후 2-3개월 시점. 베타세포 기능 회복 여부를 재평가합니다.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-stone-50 p-4 rounded text-sm">
+                            <strong>재평가 기준:</strong>
+                            <ul class="list-disc list-inside mt-1 text-stone-600">
+                                <li>Fasting C-peptide > 1.0 ng/mL</li>
+                                <li>Stimulated C-peptide > 1.5 ng/mL</li>
+                                <li>정상 혈당 유지</li>
+                            </ul>
+                        </div>
+                        <div class="bg-stone-50 p-4 rounded text-sm">
+                            <strong>약제 전환:</strong>
+                            <p class="mt-1 text-stone-600">인슐린 감량 시도 &#8594; Metformin, DPP-4 Inhibitor, Sulfonylurea 등으로 변경.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mgmt-content-2" class="mgmt-content hidden animate-fade-in">
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                        <h3 class="font-bold text-green-900">장기 관리 (Long-term & Prognosis)</h3>
+                        <p class="text-sm text-green-800">약 40-70%의 환자가 인슐린 없이 혈당 조절이 가능합니다.</p>
+                    </div>
+                    <ul class="space-y-3 text-sm text-stone-700">
+                        <li class="flex items-start">
+                            <span class="font-bold mr-2 text-teal-600 w-24 flex-shrink-0">Relapse Risk:</span>
+                            <span>높은 혈당 재발률. 스트레스 상황이나 투약 중단 시 DKA 재발 가능성이 있으므로 정기적인 추적 관찰 필수.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="font-bold mr-2 text-teal-600 w-24 flex-shrink-0">Medication:</span>
+                            <span>Metformin이 1차 선택약제. SGLT2i는 eDKA 위험으로 주의 필요. Sulfonylurea는 효과적이나 저혈당 주의.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- DATA & STATE ---
+        const quadrantData = {
+            'ApBp': {
+                title: "A+ ß+ (LADA / Late-onset T1D)",
+                content: `
+                    <p class="mb-2"><strong>특징:</strong> 자가항체 양성이지만 초기에는 베타세포 기능이 보존되어 있습니다.</p>
+                    <p class="mb-2"><strong>임상경과:</strong> 초기에는 인슐린 없이 조절될 수 있으나, 수년 내에 베타세포 파괴가 진행되어 결국 인슐린 의존성이 됩니다.</p>
+                    <p><strong>치료:</strong> 조기 인슐린 도입이 베타세포 보존에 유리할 수 있습니다.</p>
+                `,
+                tagClass: "bg-stone-200 text-stone-700",
+                id: "q-ApBp"
+            },
+            'AmBp': {
+                title: "A- ß+ (Ketosis-Prone T2D)",
+                content: `
+                    <p class="mb-2"><strong>정의:</strong> 자가항체가 없고, 급성기 이후 베타세포 기능이 회복되는 그룹입니다.</p>
+                    <p class="mb-2"><strong>임상경과:</strong> 적절한 급성기 치료 후 인슐린을 중단하고 경구약제로 전환할 수 있는 가능성이 가장 높습니다.</p>
+                    <p><strong>전략:</strong> 'Beta-cell rest'를 통한 기능 회복 유도가 치료의 핵심입니다.</p>
+                `,
+                tagClass: "bg-teal-100 text-teal-800",
+                id: "q-AmBp"
+            },
+            'ApBm': {
+                title: "A+ ß- (Classic Type 1A)",
+                content: `
+                    <p class="mb-2"><strong>특징:</strong> 전형적인 자가면역성 1형 당뇨병입니다.</p>
+                    <p class="mb-2"><strong>임상경과:</strong> 자가면역 기전에 의해 베타세포가 영구적으로 파괴되었습니다.</p>
+                    <p><strong>치료:</strong> 평생 인슐린 치료가 필수적입니다.</p>
+                `,
+                tagClass: "bg-red-100 text-red-800",
+                id: "q-ApBm"
+            },
+            'AmBm': {
+                title: "A- ß- (Idiopathic Type 1B)",
+                content: `
+                    <p class="mb-2"><strong>특징:</strong> 자가항체는 없지만 인슐린 분비능이 영구적으로 결핍된 상태입니다.</p>
+                    <p class="mb-2"><strong>역학:</strong> 아시아인과 아프리카인에서 더 흔하게 관찰됩니다 (Fulminant T1D 등 포함).</p>
+                    <p><strong>치료:</strong> 인슐린 치료가 필요합니다.</p>
+                `,
+                tagClass: "bg-stone-200 text-stone-700",
+                id: "q-AmBm"
+            }
+        };
+
+        // --- NAVIGATION LOGIC ---
+        function navTo(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            
+            // Show target section
+            document.getElementById(`section-${sectionId}`).classList.remove('hidden');
+            
+            // Update sidebar active state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                item.classList.remove('text-white');
+                item.classList.remove('border-l-4');
+            });
+            const activeBtn = document.getElementById(`btn-${sectionId}`);
+            activeBtn.classList.add('active');
+
+            // Scroll to top
+            document.getElementById('main-content').scrollTop = 0;
+
+            // Trigger chart resize/update if needed
+            if(sectionId === 'overview') renderEpiChart();
+            if(sectionId === 'pathophysiology') renderPathoChart();
+            if(sectionId === 'diagnosis') renderRadarChart();
+
+            // Mobile menu auto-close
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+        }
+
+        // --- INTERACTION LOGIC: Classification Grid ---
+        function selectQuadrant(key) {
+            const data = quadrantData[key];
+            
+            // Update UI styles
+            document.querySelectorAll('.grid-quadrant').forEach(el => {
+                el.classList.remove('selected', 'bg-teal-50', 'border-teal-600', 'border-2');
+                el.classList.add('bg-white', 'border-transparent');
+            });
+            
+            const selectedEl = document.getElementById(data.id);
+            selectedEl.classList.remove('bg-white', 'border-transparent');
+            selectedEl.classList.add('selected', 'bg-teal-50', 'border-teal-600', 'border-2');
+
+            // Update Detail Panel
+            const panel = document.getElementById('quadrant-detail');
+            document.getElementById('detail-title').innerText = data.title;
+            document.getElementById('detail-tag').innerText = key.replace('p', '+').replace('m', '-').replace('p', '+').replace('m', '-'); // Simple mapping
+            document.getElementById('detail-tag').className = `text-xs font-bold px-2 py-1 rounded uppercase mr-2 ${data.tagClass}`;
+            document.getElementById('detail-content').innerHTML = data.content;
+        }
+
+        // --- INTERACTION LOGIC: Management Tabs ---
+        function switchMgmtTab(index) {
+            // Hide all contents
+            document.querySelectorAll('.mgmt-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`mgmt-content-${index}`).classList.remove('hidden');
+
+            // Update Tab Styles
+            const tabs = [0, 1, 2];
+            tabs.forEach(i => {
+                const btn = document.getElementById(`mgmt-tab-${i}`);
+                if (i === index) {
+                    btn.classList.add('text-teal-700', 'border-b-2', 'border-teal-600');
+                    btn.classList.remove('text-stone-500');
+                } else {
+                    btn.classList.remove('text-teal-700', 'border-b-2', 'border-teal-600');
+                    btn.classList.add('text-stone-500');
+                }
+            });
+        }
+
+        // --- CHARTS ---
+        let epiChartInstance = null;
+        let pathoChartInstance = null;
+        let radarChartInstance = null;
+
+        function renderEpiChart() {
+            if (epiChartInstance) return; // Already rendered
+            const ctx = document.getElementById('epiChart').getContext('2d');
+            epiChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['African American', 'Hispanic', 'Caucasian', 'Asian/Other'],
+                    datasets: [{
+                        data: [50, 35, 10, 5], // Approximate prevalences in KPD populations
+                        backgroundColor: ['#0f766e', '#2dd4bf', '#cbd5e1', '#f1f5f9'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10 } },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ~${ctx.raw}% of KPD cases` } }
+                    }
+                }
+            });
+        }
+
+        function renderPathoChart() {
+            if (pathoChartInstance) return;
+            const ctx = document.getElementById('pathoChart').getContext('2d');
+            pathoChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Admission', 'Week 1', 'Week 2', 'Month 1', 'Month 3', 'Month 6', 'Year 1'],
+                    datasets: [
+                        {
+                            label: 'C-Peptide Levels (Beta-cell Function)',
+                            data: [0.3, 0.5, 0.9, 1.4, 1.8, 1.9, 1.8], // Simulate recovery
+                            borderColor: '#0f766e', // teal-700
+                            backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Insulin Requirement',
+                            data: [1.2, 0.8, 0.5, 0.2, 0, 0, 0], // Simulate weaning
+                            borderColor: '#ef4444', // red-500
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'Relative Level' },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                footer: (items) => {
+                                    if(items[0].dataIndex < 2) return "Acute Glucotoxicity Phase";
+                                    if(items[0].dataIndex < 4) return "Recovery Phase";
+                                    return "Maintenance Phase (Insulin Independence)";
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderRadarChart() {
+            if (radarChartInstance) return;
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['BMI (Obesity)', 'Age of Onset', 'DKA Severity', 'Autoantibodies', 'Insulin Resistance', 'Beta-cell Recovery'],
+                    datasets: [
+                        {
+                            label: 'KPD (A-ß+)',
+                            data: [80, 70, 90, 0, 80, 90], // High BMI, Older, High DKA, No Ab, High IR, High Recovery
+                            borderColor: '#0f766e',
+                            backgroundColor: 'rgba(15, 118, 110, 0.2)',
+                        },
+                        {
+                            label: 'Classic T1D (A+ß-)',
+                            data: [20, 20, 85, 100, 20, 10], // Low BMI, Young, High DKA, High Ab, Low IR, Low Recovery
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderDash: [5,5]
+                        },
+                        {
+                            label: 'Classic T2D',
+                            data: [85, 80, 10, 0, 90, 40], // High BMI, Old, Low DKA, No Ab, High IR, Mod Recovery
+                            borderColor: '#94a3b8',
+                            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e2e8f0' },
+                            grid: { color: '#e2e8f0' },
+                            pointLabels: { font: { size: 11, weight: 'bold' } },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize default section
+            navTo('overview');
+            
+            // Initialize default quadrant detail
+            selectQuadrant('AmBp');
+
+            // Mobile Menu Toggle
+            const btn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            btn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+        });
+
+    </script>
+</body>
+</html>
