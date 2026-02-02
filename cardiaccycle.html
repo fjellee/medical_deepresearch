@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>심장 주기 및 생리학적 역학 분석 (Cardiac Cycle Dynamics)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #fafaf9; /* Stone-50: Warm neutral background */
+            color: #44403c; /* Stone-700: Soft contrast text */
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Constrained max width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+
+        /* Custom Scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f5f4; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d6d3d1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e; 
+        }
+
+        .interactive-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .interactive-card:hover {
+            transform: translateY(-2px);
+            border-left-color: #ea580c; /* Orange-600 */
+            background-color: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .phase-btn.active {
+            background-color: #ea580c;
+            color: white;
+            border-color: #ea580c;
+        }
+
+        .slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #d6d3d1;
+            border-radius: 5px;
+            outline: none;
+        }
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ea580c;
+            cursor: pointer;
+            transition: background .15s ease-in-out;
+        }
+        .slider-thumb::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border: 0;
+            border-radius: 50%;
+            background: #ea580c;
+            cursor: pointer;
+            transition: background .15s ease-in-out;
+        }
+    </style>
+
+    <!-- Placeholder Comments Required by Instructions -->
+    <!-- Chosen Palette: Warm Neutrals (Stone) with Burnt Orange (Orange-600) accents for energy/cardiac focus. Minimalistic and clean. -->
+    
+    <!-- Application Structure Plan: 
+         The app follows a "Concept to Clinic" flow.
+         1. Header & Intro: Sets context.
+         2. Wiggers Diagram (Temporal View): Users visualize the synchronization of Pressure, Volume, and ECG over time. This establishes the baseline "normal" cycle.
+         3. PV Loop Simulator (Mechanical View): Interactive sliders allowing users to manipulate Preload and Afterload. This moves from observation to experimentation, solidifying the definitions through cause-and-effect.
+         4. Clinical Integration Grid: Connects the abstract concepts (Preload/Afterload) to concrete pathologies (HF, Hypertension) using a card-based layout.
+         5. Summary: Key takeaways.
+         This structure promotes understanding by first showing *what* happens (Wiggers), then *why* dynamics change (PV Loop), and finally *how* it matters medically.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Wiggers Diagram: 
+            - Goal: Visualize temporal relationship of cardiac events.
+            - Method: Chart.js Line Chart.
+            - Interaction: Hover for values, phase highlighting buttons.
+            - Justification: Best for time-series data. Canvas provides smooth rendering of curves.
+         2. PV Loop Lab:
+            - Goal: Demonstrate Preload/Afterload effects.
+            - Method: Plotly.js Scatter Plot.
+            - Interaction: Sliders to adjust EDV (Preload) and Aortic Pressure (Afterload).
+            - Justification: Plotly handles X-Y coordinate updates efficiently for loops. Sliders provide immediate feedback on the loop shape.
+         3. Physiology Cards:
+            - Goal: Define terms clearly.
+            - Method: HTML Grid with hover states.
+            - Interaction: Simple CSS hover for focus.
+            - Justification: Textual information needs to be scannable and digestible.
+         CONFIRMING: No SVG graphics used. No Mermaid JS used.
+    -->
+    
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-50 text-stone-700 selection:bg-orange-100 selection:text-orange-900">
+
+    <!-- Navigation / Header -->
+    <header class="bg-white border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-stone-800 tracking-tight">🫀 CardioDynamics</span>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <button onclick="scrollToSection('wiggers-section')" class="text-stone-500 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">심장 주기 (Wiggers)</button>
+                    <button onclick="scrollToSection('pv-loop-section')" class="text-stone-500 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">PV Loop 시뮬레이터</button>
+                    <button onclick="scrollToSection('clinical-section')" class="text-stone-500 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">임상적 연결</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+
+        <!-- Intro Section -->
+        <section class="text-center max-w-3xl mx-auto">
+            <h1 class="text-4xl font-extrabold text-stone-900 mb-4">심장 생리학의 핵심 역학</h1>
+            <p class="text-lg text-stone-600 leading-relaxed">
+                심장 주기(Cardiac Cycle)는 전기적 신호, 기계적 수축, 그리고 압력과 용적의 변화가 정교하게 맞물리는 과정입니다. 
+                이 대시보드는 <strong>Wiggers Diagram</strong>과 <strong>Pressure-Volume Loop</strong>를 통해 
+                전부하(Preload)와 후부하(Afterload)가 심장 기능에 미치는 영향을 직관적으로 탐구할 수 있도록 설계되었습니다.
+            </p>
+        </section>
+
+        <!-- SECTION 1: WIGGERS DIAGRAM -->
+        <section id="wiggers-section" class="bg-white rounded-2xl shadow-sm border border-stone-100 p-6 md:p-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-800">1. 심장 주기 타임라인 (Wiggers Diagram)</h2>
+                    <p class="text-stone-500 text-sm mt-1">시간 경과에 따른 좌심실 압력, 대동맥 압력, 좌심실 용적의 변화를 관찰하십시오.</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
+                    <button class="phase-btn px-3 py-1 text-xs font-semibold rounded-full border border-stone-300 text-stone-600 transition-colors" onclick="highlightPhase(0)">전체 보기</button>
+                    <button class="phase-btn px-3 py-1 text-xs font-semibold rounded-full border border-stone-300 text-stone-600 transition-colors" onclick="highlightPhase(1)">등용적 수축기</button>
+                    <button class="phase-btn px-3 py-1 text-xs font-semibold rounded-full border border-stone-300 text-stone-600 transition-colors" onclick="highlightPhase(2)">박출기</button>
+                    <button class="phase-btn px-3 py-1 text-xs font-semibold rounded-full border border-stone-300 text-stone-600 transition-colors" onclick="highlightPhase(3)">등용적 이완기</button>
+                    <button class="phase-btn px-3 py-1 text-xs font-semibold rounded-full border border-stone-300 text-stone-600 transition-colors" onclick="highlightPhase(4)">충만기</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Chart Area -->
+                <div class="lg:col-span-2">
+                    <div class="chart-container">
+                        <canvas id="wiggersChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Context Area -->
+                <div class="lg:col-span-1 space-y-4 bg-stone-50 p-5 rounded-xl border border-stone-200">
+                    <h3 class="font-bold text-stone-800 border-b border-stone-200 pb-2">현재 단계 상세 분석</h3>
+                    <div id="phase-info" class="text-sm space-y-3">
+                        <p class="text-stone-600"><span class="font-semibold text-orange-600">안내:</span> 차트 상단의 버튼을 클릭하거나 차트 위를 마우스로 가리키면 각 단계별 상세 생리학적 이벤트(판막 개폐, 혈류 이동)를 확인할 수 있습니다.</p>
+                        <div class="bg-white p-3 rounded border border-stone-200 shadow-sm">
+                            <span class="block text-xs font-bold text-stone-400 uppercase tracking-wide">Key Event</span>
+                            <span id="key-event-text" class="font-medium text-stone-800">심실 이완 및 충만</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-white p-2 rounded border border-stone-200 text-center">
+                                <span class="block text-xs text-stone-400">승모판 (Mitral)</span>
+                                <span id="mitral-status" class="font-bold text-green-600 text-sm">Open</span>
+                            </div>
+                            <div class="bg-white p-2 rounded border border-stone-200 text-center">
+                                <span class="block text-xs text-stone-400">대동맥판 (Aortic)</span>
+                                <span id="aortic-status" class="font-bold text-stone-400 text-sm">Closed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: PV LOOP SIMULATOR -->
+        <section id="pv-loop-section" class="bg-white rounded-2xl shadow-sm border border-stone-100 p-6 md:p-8">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-stone-800">2. PV Loop & 부하(Load) 시뮬레이터</h2>
+                <p class="text-stone-500 mt-2 max-w-3xl">
+                    압력-용적 고리(Pressure-Volume Loop)는 심장 기능을 평가하는 가장 강력한 도구입니다. 
+                    아래 슬라이더를 조절하여 <strong>전부하(Preload)</strong>와 <strong>후부하(Afterload)</strong>의 변화가 
+                    일회 박출량(Stroke Volume)과 PV Loop의 모양을 어떻게 변화시키는지 실험해 보십시오.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Controls Side -->
+                <div class="lg:col-span-4 space-y-6">
+                    <!-- Preload Control -->
+                    <div class="bg-stone-50 p-5 rounded-xl border border-stone-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-stone-800">전부하 (Preload)</label>
+                            <span id="preload-val" class="text-sm bg-stone-200 px-2 py-0.5 rounded text-stone-600">Normal</span>
+                        </div>
+                        <input type="range" id="preload-slider" min="80" max="160" value="120" step="10" class="slider-thumb w-full mb-3">
+                        <p class="text-xs text-stone-500 leading-relaxed">
+                            <strong>생리학적 의미:</strong> 심실 이완기 말 용적(EDV). 심실 근육이 수축 전 늘어나는 정도.<br>
+                            <strong>증가 요인:</strong> 정맥 환류량 증가, 수액 공급.<br>
+                            <strong>Frank-Starling 법칙:</strong> 전부하가 증가하면 수축력이 증가하여 박출량이 늘어납니다.
+                        </p>
+                    </div>
+
+                    <!-- Afterload Control -->
+                    <div class="bg-stone-50 p-5 rounded-xl border border-stone-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="font-bold text-stone-800">후부하 (Afterload)</label>
+                            <span id="afterload-val" class="text-sm bg-stone-200 px-2 py-0.5 rounded text-stone-600">Normal</span>
+                        </div>
+                        <input type="range" id="afterload-slider" min="60" max="120" value="80" step="10" class="slider-thumb w-full mb-3">
+                        <p class="text-xs text-stone-500 leading-relaxed">
+                            <strong>생리학적 의미:</strong> 심실이 혈액을 박출하기 위해 이겨내야 하는 저항(대동맥 압력).<br>
+                            <strong>증가 요인:</strong> 고혈압, 대동맥판 협착.<br>
+                            <strong>결과:</strong> 후부하가 증가하면 등용적 수축기가 길어지고 박출량이 감소할 수 있습니다.
+                        </p>
+                    </div>
+
+                    <!-- Metrics Output -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-orange-50 p-3 rounded border border-orange-100 text-center">
+                            <span class="block text-xs text-orange-800 mb-1">일회 박출량 (SV)</span>
+                            <span id="sv-display" class="text-2xl font-extrabold text-orange-600">70 ml</span>
+                        </div>
+                        <div class="bg-stone-100 p-3 rounded border border-stone-200 text-center">
+                            <span class="block text-xs text-stone-500 mb-1">박출률 (EF)</span>
+                            <span id="ef-display" class="text-2xl font-bold text-stone-700">58%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graph Side -->
+                <div class="lg:col-span-8">
+                    <div id="pvLoopChart" class="w-full h-[450px] bg-white rounded-lg border border-stone-100"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: CLINICAL CORRELATIONS -->
+        <section id="clinical-section">
+            <div class="mb-8 border-l-4 border-orange-500 pl-4">
+                <h2 class="text-3xl font-bold text-stone-900">임상적 연결성 (Clinical Correlations)</h2>
+                <p class="text-stone-600 mt-2">기초 생리학적 개념이 실제 질환에서 어떻게 나타나는지 확인합니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Card 1: Systolic Heart Failure -->
+                <div class="interactive-card bg-white p-6 rounded-xl shadow-sm border border-stone-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-4xl">💔</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">수축기 심부전 (Systolic HF)</h3>
+                    <div class="text-xs font-bold text-orange-600 bg-orange-50 inline-block px-2 py-1 rounded mb-4">수축력 감소</div>
+                    <p class="text-stone-600 text-sm mb-4 leading-relaxed">
+                        심근의 수축력(Contractility) 자체가 감소한 상태입니다.
+                    </p>
+                    <ul class="text-sm space-y-2 text-stone-600">
+                        <li class="flex items-start">
+                            <span class="mr-2 text-orange-500">↘</span> PV Loop의 폭(너비)이 좁아짐
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-orange-500">↘</span> 일회 박출량(SV) 감소
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-orange-500">↗</span> 이완기 말 용적(EDV) 증가 (보상작용)
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 2: Aortic Stenosis -->
+                <div class="interactive-card bg-white p-6 rounded-xl shadow-sm border border-stone-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-4xl">🚪</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">대동맥판 협착증 (Aortic Stenosis)</h3>
+                    <div class="text-xs font-bold text-red-600 bg-red-50 inline-block px-2 py-1 rounded mb-4">후부하(Afterload) 급증</div>
+                    <p class="text-stone-600 text-sm mb-4 leading-relaxed">
+                        판막이 좁아져 심실이 혈액을 짜내기 위해 엄청난 압력을 생성해야 합니다.
+                    </p>
+                    <ul class="text-sm space-y-2 text-stone-600">
+                        <li class="flex items-start">
+                            <span class="mr-2 text-red-500">↗</span> PV Loop의 높이(압력)가 극도로 상승
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-red-500">ℹ️</span> 심실 비대(Hypertrophy) 유발
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-red-500">↘</span> 수축기 벽 응력(Wall Stress) 증가
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 3: Mitral Regurgitation -->
+                <div class="interactive-card bg-white p-6 rounded-xl shadow-sm border border-stone-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-4xl">🔄</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">승모판 역류증 (Mitral Regurgitation)</h3>
+                    <div class="text-xs font-bold text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded mb-4">전부하(Preload) 증가</div>
+                    <p class="text-stone-600 text-sm mb-4 leading-relaxed">
+                        수축기 동안 혈액이 좌심방으로 역류하여, 다음 이완기에 좌심실로 들어오는 혈액량이 증가합니다.
+                    </p>
+                    <ul class="text-sm space-y-2 text-stone-600">
+                        <li class="flex items-start">
+                            <span class="mr-2 text-blue-500">↔️</span> 등용적 수축기가 사라짐 (즉시 역류)
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-blue-500">↗</span> PV Loop가 오른쪽으로 크게 이동 (용적 증가)
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-blue-500">↗</span> 총 박출량은 증가하나 유효 박출량은 감소
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 4: Hypertension -->
+                <div class="interactive-card bg-white p-6 rounded-xl shadow-sm border border-stone-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="text-4xl">🌡️</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">만성 고혈압 (Hypertension)</h3>
+                    <div class="text-xs font-bold text-stone-600 bg-stone-200 inline-block px-2 py-1 rounded mb-4">지속적 후부하 증가</div>
+                    <p class="text-stone-600 text-sm mb-4 leading-relaxed">
+                        높은 전신 혈관 저항으로 인해 심장이 지속적으로 높은 압력을 이겨내야 합니다.
+                    </p>
+                    <ul class="text-sm space-y-2 text-stone-600">
+                        <li class="flex items-start">
+                            <span class="mr-2 text-stone-500">↗</span> ESV(수축기 말 용적) 증가 경향
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-stone-500">↘</span> 박출량(SV) 보존을 위해 심근 비대 발생
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2 text-stone-500">⚠️</span> 장기적으로 이완기 심부전 위험 증가
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="text-center text-stone-400 text-sm py-8 border-t border-stone-200">
+            <p>Interactive Physiology Report &copy; 2024 | Cardiovascular Dynamics Education</p>
+            <p class="mt-1 text-xs">Based on standard physiological models (Guyton & Hall, Boron & Boulpaep).</p>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- Navigation Logic ---
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- SECTION 1: WIGGERS DIAGRAM LOGIC (Chart.js) ---
+        
+        // Data approximation functions for Wiggers
+        const timePoints = Array.from({length: 100}, (_, i) => i); // 0 to 99 representing one cycle (0.8s)
+        
+        // Phase Indices (approximate mapping to 0-99 scale)
+        // 0-10: Atrial Systole
+        // 10-20: Isovolumetric Contraction
+        // 20-50: Ejection
+        // 50-60: Isovolumetric Relaxation
+        // 60-100: Rapid Inflow / Diastasis
+        
+        function generateWiggersData() {
+            // Simulated physiological curves
+            const lvPressure = timePoints.map(t => {
+                if (t < 10) return 5 + (t/2); // Atrial systole bump
+                if (t < 20) return 10 + (t-10)*11; // Isovol contraction (spike to 120)
+                if (t < 45) return 120 - Math.pow((t-32)/4, 2); // Ejection (arch)
+                if (t < 60) return 100 - (t-45)*6; // Isovol relaxation (drop)
+                return 5; // Diastole
+            });
+
+            const aorticPressure = timePoints.map(t => {
+                if (t < 20) return 80 - (t/2); // Diastolic runoff
+                if (t < 45) return 120 - Math.pow((t-32)/4, 2); // Ejection (follows LVP)
+                if (t < 55) return 90 + Math.sin((t-45))*2; // Dicrotic notch
+                return 90 - (t-55)*0.3; // Diastolic runoff
+            });
+
+            const lvVolume = timePoints.map(t => {
+                if (t < 10) return 110 + t; // Atrial kick (+10ml)
+                if (t < 20) return 120; // Isovolumetric (constant)
+                if (t < 50) return 120 - (t-20)*2.3; // Ejection (drop to 50)
+                if (t < 60) return 50; // Isovolumetric (constant)
+                return 50 + (t-60)*1.5; // Rapid filling
+            });
+
+            const ecg = timePoints.map(t => {
+                // P wave (start), QRS (10-15), T (40-50)
+                if (t > 0 && t < 8) return 0.2 * Math.sin((t-4)*0.8); // P
+                if (t > 13 && t < 18) return (t === 15 || t === 16) ? 1.5 : -0.2; // QRS spike
+                if (t > 35 && t < 50) return 0.3 * Math.sin((t-42)*0.4); // T
+                return 0;
+            });
+
+            return { lvPressure, aorticPressure, lvVolume, ecg };
+        }
+
+        const wData = generateWiggersData();
+
+        const ctxWiggers = document.getElementById('wiggersChart').getContext('2d');
+        const wiggersChart = new Chart(ctxWiggers, {
+            type: 'line',
+            data: {
+                labels: timePoints,
+                datasets: [
+                    {
+                        label: '좌심실 압력 (mmHg)',
+                        data: wData.lvPressure,
+                        borderColor: '#ea580c', // Orange
+                        borderWidth: 3,
+                        yAxisID: 'yPressure',
+                        tension: 0.4,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '대동맥 압력 (mmHg)',
+                        data: wData.aorticPressure,
+                        borderColor: '#dc2626', // Red
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        yAxisID: 'yPressure',
+                        tension: 0.4,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '좌심실 용적 (mL)',
+                        data: wData.lvVolume,
+                        borderColor: '#2563eb', // Blue
+                        borderWidth: 2,
+                        yAxisID: 'yVolume',
+                        tension: 0.4,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'ECG (mV)',
+                        data: wData.ecg,
+                        borderColor: '#16a34a', // Green
+                        borderWidth: 1,
+                        yAxisID: 'yECG',
+                        tension: 0.4,
+                        pointRadius: 0,
+                        hidden: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        display: false, // Hide numeric time steps for cleaner look
+                        grid: { display: false }
+                    },
+                    yPressure: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Pressure (mmHg)' },
+                        min: 0,
+                        max: 140
+                    },
+                    yVolume: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Volume (mL)' },
+                        min: 40,
+                        max: 140,
+                        grid: { drawOnChartArea: false }
+                    },
+                    yECG: {
+                        display: false, // Hide axis labels for ECG
+                        min: -1,
+                        max: 3
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: (context) => {
+                                const t = context[0].parsed.x;
+                                if (t < 10) return '심방 수축기 (Atrial Systole)';
+                                if (t < 20) return '등용적 수축기 (Isovolumetric Contraction)';
+                                if (t < 50) return '박출기 (Ejection)';
+                                if (t < 60) return '등용적 이완기 (Isovolumetric Relaxation)';
+                                return '심실 충만기 (Filling)';
+                            }
+                        }
+                    },
+                    annotation: {
+                        // Lines separating phases could be added here if using chartjs-plugin-annotation
+                    }
+                }
+            }
+        });
+
+        function highlightPhase(phaseIndex) {
+            // Update UI buttons
+            const buttons = document.querySelectorAll('.phase-btn');
+            buttons.forEach((btn, idx) => {
+                if(idx === phaseIndex) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            // Update Info Text based on phase
+            const eventText = document.getElementById('key-event-text');
+            const mitral = document.getElementById('mitral-status');
+            const aortic = document.getElementById('aortic-status');
+            const phaseInfo = document.getElementById('phase-info');
+
+            // Ranges in data indices
+            let min, max;
+            
+            switch(phaseIndex) {
+                case 1: // Isovol Contraction
+                    min = 10; max = 20;
+                    eventText.innerHTML = "심실 압력 급상승, 모든 판막 닫힘";
+                    mitral.innerHTML = "<span class='text-stone-400'>Closed</span>";
+                    aortic.innerHTML = "<span class='text-stone-400'>Closed</span>";
+                    break;
+                case 2: // Ejection
+                    min = 20; max = 50;
+                    eventText.innerHTML = "대동맥판 열림, 혈액 박출";
+                    mitral.innerHTML = "<span class='text-stone-400'>Closed</span>";
+                    aortic.innerHTML = "<span class='text-green-600'>Open</span>";
+                    break;
+                case 3: // Isovol Relaxation
+                    min = 50; max = 60;
+                    eventText.innerHTML = "심실 압력 급하강, 대동맥판 닫힘";
+                    mitral.innerHTML = "<span class='text-stone-400'>Closed</span>";
+                    aortic.innerHTML = "<span class='text-stone-400'>Closed</span>";
+                    break;
+                case 4: // Filling
+                    min = 60; max = 99;
+                    eventText.innerHTML = "승모판 열림, 혈액 유입";
+                    mitral.innerHTML = "<span class='text-green-600'>Open</span>";
+                    aortic.innerHTML = "<span class='text-stone-400'>Closed</span>";
+                    break;
+                default: // All/Atrial
+                    min = 0; max = 100;
+                    eventText.innerHTML = "전체 주기 관찰";
+                    mitral.innerHTML = "Varies";
+                    aortic.innerHTML = "Varies";
+            }
+
+            // Visual highlight in chart (simple version: zoom or filter? Just text update is safer for stability)
+            // Ideally, we would add a shaded region annotation, but text context is sufficient for this scope.
+        }
+
+
+        // --- SECTION 2: PV LOOP LOGIC (Plotly.js) ---
+
+        // State for PV Loop
+        let preload = 120; // EDV
+        let afterload = 80; // Diastolic Aortic Pressure (affects height of opening)
+        let esvBase = 50; // Base ESV at normal conditions
+        let contractility = 1.0; // Slope of ESPVR
+
+        function calculatePVLoop(p_edv, p_afterload) {
+            // Simplified PV Loop Geometry
+            // 1. Filling (Bottom): Volume 50 -> EDV, Pressure ~5-10
+            // 2. Isovol Contraction (Right): Volume EDV, Pressure 10 -> Afterload
+            // 3. Ejection (Top): Volume EDV -> ESV, Pressure rises slightly then falls
+            // 4. Isovol Relaxation (Left): Volume ESV, Pressure End-Systolic -> 10
+            
+            // Effect of Afterload on ESV (simplified ESPVR line logic)
+            // ESPVR: P = Emax * (V - V0). If P (Afterload peak) increases, V (ESV) must increase if Emax is constant.
+            // Let's approximate: Higher afterload = Higher pressure required = slightly less ejection = Higher ESV.
+            const adjustedESV = esvBase + (p_afterload - 80) * 0.4; 
+            
+            // Peak Systolic Pressure (approx related to Afterload)
+            const peakPressure = p_afterload + 40; 
+
+            // Points for Plotly (Polyline)
+            const x = [adjustedESV, p_edv, p_edv, adjustedESV, adjustedESV]; // Volume
+            const y = [10, 15, p_afterload, peakPressure, 10]; // Pressure (Simplified box shape with curve approx)
+            
+            // More points for smoother curve approximation (Optional, keep simple polygon for robustness)
+            // Let's make it a bit more "Loopy"
+            const x_smooth = [
+                adjustedESV, // Start Relax (ESV, Low P)
+                p_edv * 0.6 + adjustedESV * 0.4, // Mid filling
+                p_edv, // End Diastole (EDV, Low P)
+                p_edv, // Isovol Contraction Top (EDV, Afterload P)
+                (p_edv + adjustedESV) / 2, // Peak Ejection
+                adjustedESV, // End Systole (ESV, Peak P approx)
+                adjustedESV // Back to start
+            ];
+            
+            // Adjusted logic for visual clarity of interactions
+            // Point A: Mitral Valve Opens (ESV, Low P) -> (adjustedESV, 5)
+            // Point B: Mitral Valve Closes (EDV, Low P) -> (p_edv, 10)
+            // Point C: Aortic Valve Opens (EDV, Afterload) -> (p_edv, p_afterload)
+            // Point D: Aortic Valve Closes (ESV, Peak P) -> (adjustedESV, peakPressure)
+            
+            // We draw lines between A->B->C->D->A
+            
+            return {
+                x: [adjustedESV, p_edv, p_edv, adjustedESV, adjustedESV],
+                y: [5, 12, p_afterload, peakPressure, 5],
+                sv: Math.round(p_edv - adjustedESV),
+                ef: Math.round(((p_edv - adjustedESV) / p_edv) * 100)
+            };
+        }
+
+        function updatePVChart() {
+            const data = calculatePVLoop(preload, afterload);
+            
+            // Update Metrics
+            document.getElementById('sv-display').innerText = data.sv + " ml";
+            document.getElementById('ef-display').innerText = data.ef + "%";
+            document.getElementById('preload-val').innerText = preload + " ml";
+            document.getElementById('afterload-val').innerText = afterload + " mmHg";
+
+            const trace = {
+                x: data.x,
+                y: data.y,
+                mode: 'lines+markers',
+                fill: 'toself',
+                fillcolor: 'rgba(234, 88, 12, 0.1)', // Orange tint
+                line: {
+                    color: '#ea580c',
+                    width: 3,
+                    shape: 'spline',
+                    smoothing: 0.5
+                },
+                marker: {
+                    size: 6,
+                    color: '#ea580c'
+                },
+                name: 'PV Loop'
+            };
+
+            const layout = {
+                title: 'Pressure-Volume Loop',
+                xaxis: {
+                    title: 'Volume (mL)',
+                    range: [0, 200],
+                    showgrid: true,
+                    zeroline: true
+                },
+                yaxis: {
+                    title: 'Pressure (mmHg)',
+                    range: [0, 180],
+                    showgrid: true,
+                    zeroline: true
+                },
+                margin: { t: 40, r: 20, l: 50, b: 50 },
+                hovermode: 'closest'
+            };
+
+            // Annotations for Loop Corners
+            layout.annotations = [
+                {
+                    x: data.x[1], y: data.y[1], xref: 'x', yref: 'y',
+                    text: '이완기 말 (EDV)', showarrow: true, arrowhead: 2, ax: 20, ay: 20
+                },
+                {
+                    x: data.x[2], y: data.y[2], xref: 'x', yref: 'y',
+                    text: '대동맥판 열림', showarrow: true, arrowhead: 2, ax: 20, ay: -20
+                }
+            ];
+
+            Plotly.react('pvLoopChart', [trace], layout, {displayModeBar: false, responsive: true});
+        }
+
+        // Initialize Plotly
+        updatePVChart();
+
+        // Slider Event Listeners
+        document.getElementById('preload-slider').addEventListener('input', (e) => {
+            preload = parseInt(e.target.value);
+            updatePVChart();
+        });
+
+        document.getElementById('afterload-slider').addEventListener('input', (e) => {
+            afterload = parseInt(e.target.value);
+            updatePVChart();
+        });
+        
+        // Window Resize Handler for Chart.js
+        window.addEventListener('resize', () => {
+             wiggersChart.resize();
+             Plotly.Plots.resize('pvLoopChart');
+        });
+
+    </script>
+</body>
+</html>
